@@ -85,8 +85,8 @@ module.exports.OnNewConnection = function (socket) {
         LeaveRoom (socket);
     });
 
-    socket.on ("m_CreateRoom", (strPlayerName) => {
-        CreateRoom (socket, strPlayerName);
+    socket.on ("m_CreateRoom", (strPlayerName, strGameMode) => {
+        CreateRoom (socket, strPlayerName, strGameMode);
     });
 
     socket.on ("m_JoinRoom", (strRoomCode, strPlayerName) => {
@@ -146,7 +146,7 @@ function StartGame (socket) {
 
         const bIsHost = (i === 0);
         const strId = gameCache.SetPlayerCache (strRoomCode, val.name, bIsHost);
-        io.to(val.socketId).emit ("m_RedirectToGame", strId);
+        io.to(val.socketId).emit ("m_RedirectToGame", strId, mapValue.gameMode || "nomercy");
     }
 }
 
@@ -274,8 +274,8 @@ function UpdateHostButtons (strRoomCode)
     io.to(socketId).emit ("m_UpdateHostButtons", bShowButtons);
 }
 
-function CreateRoom (socket, strPlayerName) {
-    Log (LogTrace, strPlayerName + " tried to create a room: " + socket.id);
+function CreateRoom (socket, strPlayerName, strGameMode) {
+    Log (LogTrace, strPlayerName + " tried to create a room (" + strGameMode + "): " + socket.id);
 
     if (mapRoomCodeToPlayers.size >= nMaxRoomsAllowed)
     {
@@ -303,6 +303,7 @@ function CreateRoom (socket, strPlayerName) {
     //Index 0 will always be the host
     value.players[0] = { name: strPlayerName, socketId: socket.id };
     value.count = 1;    //number of players currently in the group
+    value.gameMode = (strGameMode === "classic") ? "classic" : "nomercy";
 
     mapRoomCodeToPlayers.set (strRoomCode, value);
 

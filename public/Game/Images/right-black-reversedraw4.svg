@@ -1,0 +1,18 @@
+<svg width="273" height="178" viewBox="0 0 273 178" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.485352" y="177.295" width="177" height="272" transform="rotate(-90 0.485352 177.295)" fill="#2E2E2E"/>
+<path d="M37.4305 18.0755C42.6626 10.6034 49.507 4.68033 57.5581 0.297287H146.847C160.291 5.33215 173.796 12.3875 186.738 21.4492C242.945 60.8057 267.227 123.105 240.974 160.598C236.17 167.46 230.006 173.015 222.796 177.271L128.75 177.296C116.237 172.35 103.708 165.656 91.6668 157.225C35.4598 117.868 11.1774 55.5689 37.4305 18.0755Z" fill="white"/>
+<!-- Corner symbols -->
+<text x="12" y="172" font-family="Arial, sans-serif" font-weight="bold" font-size="10" fill="white" transform="rotate(-90 12 172)">+4</text>
+<text x="258" y="26" font-family="Arial, sans-serif" font-weight="bold" font-size="10" fill="white" transform="rotate(-90 258 26)">+4</text>
+<!-- Center: reverse arrows (rotated for right orientation) -->
+<g transform="translate(136 89) rotate(-90) translate(-89 -89)">
+<path d="M67.5 108L98.6 77L121 99.4L89.8 130.6L67.5 108Z" fill="#EF4343"/>
+<path d="M138.6 59.4L132.7 115.2L82.8 65.3L138.6 59.4Z" fill="#EF4343"/>
+<path d="M91 129.4C78.6 141.7 68.6 151.7 68.6 151.7C56.3 139.4 56.3 119.4 68.6 107L91 129.4Z" fill="#EF4343"/>
+<path d="M110.4 167.6L79.2 198.8L56.9 176.4L88 145.3L110.4 167.6Z" fill="#004FC5"/>
+<path d="M39.2 216.4L45.1 160.6L95.1 210.5L39.2 216.4Z" fill="#004FC5"/>
+<path d="M86.9 146.5C99.2 134.1 109.2 124.1 109.2 124.1C121.6 136.4 121.6 156.5 109.2 168.8L86.9 146.5Z" fill="#004FC5"/>
+</g>
+<!-- +4 text -->
+<text x="136" y="150" font-family="Arial, sans-serif" font-weight="bold" font-size="20" fill="#2E2E2E" text-anchor="middle">+4</text>
+</svg>

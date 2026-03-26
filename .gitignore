@@ -1,5 +1,7 @@
-.ionide/
+node_modules/
 .DS_Store
-
+.ionide/
 Log/
 Utils/
+*.log
+.env

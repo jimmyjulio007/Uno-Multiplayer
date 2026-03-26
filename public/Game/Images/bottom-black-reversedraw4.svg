@@ -1,0 +1,20 @@
+<svg width="178" height="273" viewBox="0 0 178 273" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.19043" y="0.59082" width="177" height="272" fill="#2E2E2E"/>
+<path d="M159.41 37.5355C166.882 42.7676 172.806 49.612 177.189 57.6631V146.952C172.154 160.396 165.098 173.901 156.037 186.843C116.68 243.05 54.3809 267.332 16.8876 241.079C10.0261 236.275 4.47089 230.111 0.214858 222.901L0.189941 128.855C5.136 116.342 11.8302 103.813 20.2612 91.7718C59.6178 35.5648 121.917 11.2824 159.41 37.5355Z" fill="white"/>
+<!-- Corner symbols: reverse + +4 -->
+<text x="5" y="18" font-family="Arial, sans-serif" font-weight="bold" font-size="10" fill="white">+4</text>
+<path d="M10.5 20L17.5 13L22.5 18L15.5 25L10.5 20Z" fill="white"/>
+<path d="M26 4.8L25 17L14 6L26 4.8Z" fill="white"/>
+<text x="143" y="266" font-family="Arial, sans-serif" font-weight="bold" font-size="10" fill="white">+4</text>
+<path d="M157.5 245L164.5 238L169.5 243L162.5 250L157.5 245Z" fill="white"/>
+<path d="M173 234L172 246L161 235L173 234Z" fill="white"/>
+<!-- Center: reverse arrows -->
+<path d="M67.5 108L98.6 77L121 99.4L89.8 130.6L67.5 108Z" fill="#EF4343"/>
+<path d="M138.6 59.4L132.7 115.2L82.8 65.3L138.6 59.4Z" fill="#EF4343"/>
+<path d="M91 129.4C78.6 141.7 68.6 151.7 68.6 151.7C56.3 139.4 56.3 119.4 68.6 107L91 129.4Z" fill="#EF4343"/>
+<path d="M110.4 167.6L79.2 198.8L56.9 176.4L88 145.3L110.4 167.6Z" fill="#004FC5"/>
+<path d="M39.2 216.4L45.1 160.6L95.1 210.5L39.2 216.4Z" fill="#004FC5"/>
+<path d="M86.9 146.5C99.2 134.1 109.2 124.1 109.2 124.1C121.6 136.4 121.6 156.5 109.2 168.8L86.9 146.5Z" fill="#004FC5"/>
+<!-- +4 text in center -->
+<text x="89" y="215" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="#2E2E2E" text-anchor="middle">+4</text>
+</svg>

@@ -4,30 +4,27 @@
 ////////////////////////////////////////////////////////////////////////////////
 */
 
-
 .allowDlg {
     position: absolute;
-    display: none;  /* Set this to none initially so the dlg doesnt show up*/
-    
+    display: none;
     flex-direction: column;
     align-items: center;
-    /* justify-content: space-between; */
 
     left: 5%;
     top: 5%;
     min-height: 7rem;
-    /* min-width: 15rem; */
-    /* transform: translateX(50%); */
-    
-    /* Prevent the allow message Dlg from getting too too large */
-    /* max-width: 25vw;     */
-    width: 20rem;
+    width: 22rem;
 
-    background: #1B262C;
-    box-shadow: 0px 0px 5px 8px rgba(0, 0, 0, 0.25);
+    background: rgba(27, 38, 44, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    z-index: 40;
+    overflow: hidden;
 }
 
-/* 
+/*
 ////////////////////////////////////
 ////////////     Header
 ////////////////////////////////////
@@ -37,15 +34,16 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 0.4rem 0rem;
-    background: #0F4C75;
+    padding: 0.6rem 0rem;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     margin-bottom: 0.5rem;
 }
 
 .allowDlg_header p {
-    padding-left: 0.8rem;
-    font-size: 20px;
-    font-weight: bold;
+    padding-left: 1rem;
+    font-size: 17px;
+    font-weight: 700;
     color: #efefef;
 }
 
@@ -54,27 +52,32 @@
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 50%;
-    
-    background: #D31C1C;
-    box-shadow: 0px 0px 3px 2px rgba(0, 0, 0, 0.25);
-    margin: 0 0.5rem;
-    transition: background 0.15s;
+    background: linear-gradient(135deg, #FF6B6B, #D31C1C);
+    box-shadow: 0 2px 8px rgba(211, 28, 28, 0.4);
+    margin: 0 0.8rem;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
 .allowDlg_CloseBtn:hover {
-    background: #FFAAAA;
+    background: linear-gradient(135deg, #FFAAAA, #FF6B6B);
+    transform: scale(1.15);
 }
-
 
 .allowDlg_msg {
     display: inline;
-    font-size: 18px;
-    color: #efefef;
+    font-size: 16px;
+    color: rgba(239, 239, 239, 0.85);
     text-align: center;
-
-    padding: 1rem 1rem;
+    padding: 0.8rem 1rem;
 }
-/* 
+
+.allowDlg_playerName {
+    color: #FFD700;
+    font-weight: 600;
+}
+
+/*
 ////////////////////////////////////
 ////////////     Buttons
 ////////////////////////////////////
@@ -84,43 +87,42 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-around;
-
+    justify-content: center;
+    gap: 12px;
     width: 100%;
-    /* padding: 0rem 0.5rem; */
-
+    padding-bottom: 1rem;
 }
 
-/* Only butttons */
 .allowDlg_Btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem 1.8rem;
-    /* margin: 0 0.5rem; */
-    
-
-    border-radius: 5rem;
+    padding: 8px 28px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
 }
 
 .allowDlg_BtnAllow {
-    background: #37AD00;
-    cursor: default;
-    transition: background 0.1s;
+    background: linear-gradient(135deg, #00CC5E, #00A34B);
+    box-shadow: 0 3px 12px rgba(0, 204, 94, 0.3);
 }
 .allowDlg_BtnAllow:hover {
-    background: #92E26C;
+    background: linear-gradient(135deg, #00FF75, #00CC5E);
+    box-shadow: 0 5px 20px rgba(0, 204, 94, 0.5);
+    transform: translateY(-2px);
 }
 .allowDlg_BtnDeny {
-    background: #B80A00;
-    cursor: default;
-    transition: background 0.1s;
+    background: linear-gradient(135deg, #EF5555, #D31C1C);
+    box-shadow: 0 3px 12px rgba(239, 85, 85, 0.3);
 }
 .allowDlg_BtnDeny:hover {
-    background: #FF8D86;
+    background: linear-gradient(135deg, #FF6B6B, #EF5555);
+    box-shadow: 0 5px 20px rgba(239, 85, 85, 0.5);
+    transform: translateY(-2px);
 }
 .allowDlg_Btn p {
-    color: #efefef;
-    font-weight: bold;
-    font-size: 20px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
 }

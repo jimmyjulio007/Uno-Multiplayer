@@ -3,6 +3,86 @@ const ug_nGenericTimeout = 3500;    //ms
 let ug_bInitJoinRoom = false;
 let ug_bInitJoinRoomAlreadyFailed = false;
 
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          Sound Effects
+//////////////////////////////////////////////////////////////////////////////////////////
+const ug_sfx = {
+    fah: new Audio("Game/Sounds/fah.mp3"),
+    kasongo: new Audio("Game/Sounds/kasongo.mp3"),
+    atassa: new Audio("Game/Sounds/atassa.mp3"),
+};
+ug_sfx.fah.preload = "auto";
+ug_sfx.fah.volume = 0.7;
+ug_sfx.kasongo.preload = "auto";
+ug_sfx.kasongo.volume = 0.8;
+ug_sfx.atassa.preload = "auto";
+ug_sfx.atassa.volume = 0.8;
+
+/** Play "FAHHH" for 2 sec — on +10 */
+function UGi_PlayFahSound() {
+    const snd = ug_sfx.fah;
+    snd.currentTime = 0;
+    snd.play().catch(() => {});
+    setTimeout(() => { snd.pause(); snd.currentTime = 0; }, 2000);
+}
+
+/** Play "KASONGO" for 16 sec — on stack >= 6 */
+function UGi_PlayKasongoSound() {
+    const snd = ug_sfx.kasongo;
+    snd.currentTime = 0;
+    snd.play().catch(() => {});
+    setTimeout(() => { snd.pause(); snd.currentTime = 0; }, 16000);
+}
+
+/** Play "ATASSA" from 3 sec to end — on +4 attack */
+function UGi_PlayAtassaSound() {
+    const snd = ug_sfx.atassa;
+    snd.currentTime = 3; // Start at 3 seconds
+    snd.play().catch(() => {});
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          Confetti Explosion (winner celebration)
+//////////////////////////////////////////////////////////////////////////////////////////
+
+function UGi_LaunchConfetti() {
+    const container = document.body;
+    const colors = ["#EF4343", "#0066FF", "#00CC5E", "#FFF50F", "#FF8C00", "#FF69B4", "#FFD700"];
+    const totalPieces = 150;
+
+    for (let i = 0; i < totalPieces; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confettiPiece";
+
+        // Random properties
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const left = Math.random() * 100;
+        const delay = Math.random() * 2;
+        const duration = 2.5 + Math.random() * 2;
+        const size = 6 + Math.random() * 8;
+        const shape = Math.random() > 0.5 ? "50%" : "2px";
+        const rotateEnd = Math.floor(Math.random() * 720 - 360);
+        const driftX = Math.floor(Math.random() * 200 - 100);
+
+        piece.style.cssText =
+            "position:fixed;z-index:9999;pointer-events:none;" +
+            "width:" + size + "px;height:" + (size * 0.6) + "px;" +
+            "background:" + color + ";" +
+            "border-radius:" + shape + ";" +
+            "left:" + left + "%;top:-10px;" +
+            "animation:confettiFall " + duration + "s ease-in " + delay + "s forwards;" +
+            "--confetti-drift:" + driftX + "px;" +
+            "--confetti-rotate:" + rotateEnd + "deg;";
+
+        container.appendChild(piece);
+
+        // Clean up
+        setTimeout(() => {
+            if (piece.parentNode) piece.parentNode.removeChild(piece);
+        }, (duration + delay) * 1000 + 500);
+    }
+}
+
 // Once you disconnect you shouldnt reconnect again
 let ug_bPlayerDisconnected = false;
 
@@ -12,7 +92,11 @@ let ug_strCurrentCardType;
 //Note: If you change the name then you would have to change it in server file as well
 //nForceDraw gets set to 1 when its a draw2 and gets set to 2 when its a draw4... The value will be the number of cards to pick up which allows people to chain draw2 together
 //strAdditionalCol gets set to the color chosen when a wild or draw 4 is thrown
-const ug_currCardMeta = {nCardThrown: false, nForceDraw: 0, nForceDrawValue: 0, strAdditionalCol: ""};
+const ug_currCardMeta = {nCardThrown: false, nForceDraw: 0, nForceDrawValue: 0, strAdditionalCol: "", bSkipAll: false};
+
+// Game mode: "nomercy" or "classic"
+const ug_strGameMode = GetUrlValue("mode") || "nomercy";
+const ug_bNoMercy = (ug_strGameMode !== "classic");
 
 //this can be used to check when its your turn.. This is the master flag.. If this is false then you cannot do anything (master flag)
 let ug_bIsYourTurn = false; 
@@ -44,7 +128,8 @@ socket.on("connect", () => {
         ug_bInitJoinRoom = false;
 
         const strCode = GetUrlValue("id");
-        socket.emit("g_InitJoinRoom", strCode);
+        const strMode = GetUrlValue("mode") || "nomercy";
+        socket.emit("g_InitJoinRoom", strCode, strMode);
         
         setTimeout (UGi_InitJoinRoomFailed, ug_nGenericTimeout, "Server did not respond in time");
 
@@ -165,7 +250,9 @@ socket.on ("g_UpdateScoreBoard_ShowBtn", (strPlayerWonName) => {
     }
     else
     {
-        scoreBoardNextRoundBtn.querySelector("p").textContent = "Main Menu"; 
+        scoreBoardNextRoundBtn.querySelector("p").textContent = "Main Menu";
+        // WINNER! Launch confetti explosion
+        UGi_LaunchConfetti();
     }
 });
 
@@ -179,7 +266,61 @@ socket.on ("g_UpdateScoreBoard_HideBtn", () => {
 socket.on ("g_StartNextRoundSuccess", (strStartingCard) => {
     UGi_SetScoreBoardVisibility (false);
     UG_UpdateCurrentCard (strStartingCard, null);
+
+    // Reset all player visuals for new round
+    UGi_ResetForNewRound();
 });
+
+function UGi_ResetForNewRound() {
+    // Reset all flags
+    ug_bIsYourTurn = false;
+    ug_bCanDrawCard = false;
+    ug_bCanThrowAnyCard = false;
+    ug_bCanThrowSameNumber = false;
+    ug_bUnoDeclared = false;
+    ug_currCardMeta.nCardThrown = 0;
+    ug_currCardMeta.nForceDraw = 0;
+    ug_currCardMeta.nForceDrawValue = 0;
+    ug_currCardMeta.strAdditionalCol = "";
+    ug_currCardMeta.bSkipAll = false;
+    ug_currCardMeta._prevCardColor = "";
+
+    // Hide all UI overlays
+    UG_ShowEndTurnButton(false);
+    UGi_WildShowColorPicker(false);
+    UGi_WildShowColorChosen("");
+    UGi_StopTurnTimer();
+    const challengeBtn = document.querySelector(".challengeBtn");
+    if (challengeBtn) challengeBtn.style.display = "none";
+    const acceptBtn = document.querySelector(".acceptDrawBtn");
+    if (acceptBtn) acceptBtn.style.display = "none";
+    const forceCount = document.querySelector(".forceCardCount");
+    if (forceCount) forceCount.style.display = "none";
+    const swapDlg = document.querySelector(".swapDlg");
+    if (swapDlg) swapDlg.style.display = "none";
+    const yourTurn = document.querySelector(".player0 h1");
+    if (yourTurn) yourTurn.style.display = "none";
+
+    // Reset eliminated player visuals (restore opacity/filter)
+    for (let i = 0; i < nMaxPlayers; i++) {
+        if (uc_players[i]) {
+            uc_players[i].style.opacity = "1";
+            uc_players[i].style.filter = "none";
+        }
+    }
+
+    // Reset previous turn highlight
+    if (ug_prevTurnPlayer) {
+        UC_HighlightPlayerCtn(ug_prevTurnPlayer, false);
+        ug_prevTurnPlayer = null;
+    }
+
+    // Stop any playing sounds
+    for (const key in ug_sfx) {
+        ug_sfx[key].pause();
+        ug_sfx[key].currentTime = 0;
+    }
+}
 
 function UGi_SetScoreBoardVisibility (bShow)
 {
@@ -220,6 +361,7 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
         ug_currCardMeta.nForceDraw = metaData.nForceDraw;
         ug_currCardMeta.nForceDrawValue = metaData.nForceDrawValue;
         ug_currCardMeta.strAdditionalCol = metaData.strAdditionalCol;
+        ug_currCardMeta.bSkipAll = metaData.bSkipAll || false;
     }
     else
     {
@@ -227,6 +369,7 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
         ug_currCardMeta.nForceDraw = 0;
         ug_currCardMeta.nForceDrawValue = 0;
         ug_currCardMeta.strAdditionalCol = "";
+        ug_currCardMeta.bSkipAll = false;
     }
 
     UGi_WildShowColorChosen (ug_currCardMeta.strAdditionalCol); //Hide/show the chosen color
@@ -242,27 +385,69 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
         {
             ele.style.display = "flex";
             ele.textContent = "+" + ug_currCardMeta.nForceDrawValue.toString();
+
+            // Sound effects based on penalty severity
+            if (ug_currCardMeta.nForceDrawValue >= 6)
+            {
+                UGi_PlayKasongoSound();  // +6, +10 or big stacks
+            }
+            else if (ug_currCardMeta.nForceDrawValue >= 4)
+            {
+                UGi_PlayAtassaSound();   // +4 attack
+            }
         }
     }
 
     const yourTurnTextEle = document.querySelector (".player0 h1");
+    // No Mercy: Hide UNO button and challenge buttons at start of each turn
+    {
+        // UNO button stays visible — just reset flag
+        ug_bUnoDeclared = false;
+    }
+
     if (ePlayerTurn === uc_playerSelf)
     {
         //Its your turn
         ug_bIsYourTurn = true;
         ug_bCanDrawCard = true;
 
-        //If a draw2 or draw4 was thrown then you cannot throw any card, you can only throw a card of the same number to stack it
-        ug_bCanThrowAnyCard = (metaData ? (metaData.nForceDraw === 0) : true);
-        ug_bCanThrowSameNumber = true;
+        // Show UNO button early if you have 2 cards (you need to press before playing)
+        UGi_CheckShowUnoButton();
+
+        // If forced to draw (+2/+4/+6/+10 stack), can ONLY stack or draw — no normal cards
+        if (metaData && metaData.nForceDraw > 0) {
+            ug_bCanThrowAnyCard = true;  // true so UGi_ThrowCardIsValid checks stacking
+            ug_bCanThrowSameNumber = false; // cannot play same-number cards
+        } else {
+            ug_bCanThrowAnyCard = true;
+            ug_bCanThrowSameNumber = true;
+        }
 
         yourTurnTextEle.style.display = "flex";
+
+        // Start turn timer
+        UGi_StartTurnTimer();
+
+        // No Mercy: If a +4 was played against us, show challenge/accept buttons
+        if (metaData && metaData.bCanChallenge)
+        {
+            document.querySelector(".challengeBtn").style.display = "flex";
+            document.querySelector(".acceptDrawBtn").style.display = "flex";
+        }
+        else
+        {
+            document.querySelector(".challengeBtn").style.display = "none";
+            document.querySelector(".acceptDrawBtn").style.display = "none";
+        }
     }
     else
     {
         //Its not your turn
         ug_bIsYourTurn = false;
         yourTurnTextEle.style.display = "none";
+        document.querySelector(".challengeBtn").style.display = "none";
+        document.querySelector(".acceptDrawBtn").style.display = "none";
+        UGi_StopTurnTimer();
     }
     
 });
@@ -323,17 +508,32 @@ socket.on ("g_UpdateThrownCard", (strCurrentCard, cardMeta) => {
     else
     {
         console.log ("Error... Card thrown signal was received but meta data is incorrect");
-        //Temporary call this so it actually updates... Ideally this is an error case and should never show up
-        cardMeta.nCardThrown = 1;   //Correct the nCardThrown.. Technically it can be any number but we dont know what it should be so set it to 1
+        cardMeta.nCardThrown = 1;
         UG_UpdateCurrentCard (strCurrentCard, cardMeta);
+    }
+
+    // Sound effect: FAHHH when +10 is played
+    if (strCurrentCard && strCurrentCard.indexOf("draw10") !== -1) {
+        UGi_PlayFahSound();
     }
 });
 
 socket.on ("g_UpdateOtherPlayerCards", (strPlayerName, cardsData) => {
-    console.log ("UpdateOtherPlayer");
     let ePlayer = UGi_GetPlayerFromName (strPlayerName);
-    if (ePlayer == null) { console.log("Error..."); return; }
+    if (ePlayer == null) { return; }
+
+    // CRITICAL: Never overwrite our own cards with backs!
+    if (ePlayer === uc_playerSelf) {
+        console.log("Blocked: server tried to send backs for own cards");
+        return;
+    }
+
     UC_SetPlayerCards (ePlayer, cardsData);
+
+    // Track last player who played (for reference)
+    if (cardsData.length === 1) {
+        ug_strLastPlayerWhoPlayed = strPlayerName;
+    }
 });
 
 socket.on ("g_SetPlayDirection", (bClockwise) => {
@@ -423,26 +623,39 @@ socket.on ("g_RotateClosedDeck", () => {
 
 //Draw a card
 document.querySelector (".deckCard").addEventListener ("click", () => {
-    if (ug_bPlayerDisconnected) { console.log("Player disconnected... Cannot draw card"); return; }
+    if (ug_bPlayerDisconnected) { return; }
     if (!ug_bCanDrawCard) { return; }
+
+    // Immediately lock to prevent double-click
+    ug_bCanDrawCard = false;
 
     if (ug_currCardMeta.nForceDraw != 0)
     {
-        if (ug_currCardMeta.nForceDrawValue == 0) { console.log ("Error..."); ug_currCardMeta.nForceDrawValue = 1; }
+        // Forced draw (stack penalty) — draw all at once
+        if (ug_currCardMeta.nForceDrawValue == 0) { ug_currCardMeta.nForceDrawValue = 1; }
         UGi_DrawCard (ug_currCardMeta.nForceDrawValue);
     }
     else
     {
-        UGi_DrawCard (1);
+        // Normal draw: 1 card at a time. Server tells us if it's playable.
+        socket.emit("g_DrawOneCard");
     }
     AC_StartDeckAnim ();
     socket.emit ("g_RotateClosedDeckAllPlayers");
-    
-    //Player now has to manually press end turn
-    // UGi_EndTurn(); 
-    ug_bCanDrawCard = false;  //invalidate.. This is to prevent the user from double clicking the deck card and ending up drawing two cards
-
     ug_currCardMeta.nCardThrown = 0;
+});
+
+// Server response after drawing 1 card
+socket.on("g_DrawOneCardResult", (bPlayable) => {
+    if (bPlayable) {
+        // Drawn card is playable — player can play it or end turn
+        ug_bCanThrowAnyCard = true;
+        ug_bCanThrowSameNumber = true;
+        UG_ShowEndTurnButton(true);
+    } else {
+        // Not playable — allow drawing another card
+        ug_bCanDrawCard = true;
+    }
 });
 
 //////////
@@ -490,12 +703,20 @@ function UGi_SetScoreBoardDetails (data, strRoomCode) {
 
 document.querySelectorAll (".wildChooseColor .block").forEach ((block) => {
     block.addEventListener ("click", () => {
+        // If color roulette is active, handle that instead of wild card
+        if (typeof ug_bRouletteActive !== "undefined" && ug_bRouletteActive) {
+            const strColor = block.getAttribute("blockCol");
+            ug_bRouletteActive = false;
+            UGi_WildShowColorPicker(false);
+            socket.emit("g_ColorRoulette", strColor);
+            return;
+        }
+
         ug_currCardMeta.strAdditionalCol = block.getAttribute ("blockCol");
         console.log (ug_currCardMeta.strAdditionalCol);
-        UGi_WildShowColorPicker (false);    //Hide the color picker
+        UGi_WildShowColorPicker (false);
 
-        //Update the other players that I threw a card
-        const strCard = ug_strCurrentCardColor + "-" + ug_strCurrentCardType;    
+        const strCard = ug_strCurrentCardColor + "-" + ug_strCurrentCardType;
         socket.emit ("g_UpdateThrownCardAllPlayers", strCard, ug_currCardMeta);
 
         UGi_EndTurn();
@@ -506,8 +727,17 @@ document.querySelectorAll (".wildChooseColor .block").forEach ((block) => {
 function UGi_WildShowColorPicker (bShow) {
     const ele = document.querySelector (".wildChooseColor");
     if (!ele) { console.log ("Error..."); return; }
-    const strVal = (bShow === true ? "flex" : "none");
-    ele.style.display = strVal;
+    ele.style.display = (bShow === true ? "flex" : "none");
+
+    // Update label based on context
+    const label = ele.querySelector(".colorPickerLabel");
+    if (label) {
+        if (typeof ug_bRouletteActive !== "undefined" && ug_bRouletteActive) {
+            label.textContent = "Roulette — Pick a color";
+        } else {
+            label.textContent = "Choose Color";
+        }
+    }
 }
 
 //Wild/Draw4 show color chosen
@@ -621,58 +851,102 @@ function UG_CardOnClick(eCard) {
     if (!UGi_ThrowCardIsValid(strColor, strType, ug_strCurrentCardColor, ug_strCurrentCardType)) { return; } 
     
     //valid card was clicked
+    // Store previous color BEFORE updating (needed for draw4 challenge)
+    ug_currCardMeta._prevCardColor = ug_strCurrentCardColor;
+
     ug_strCurrentCardColor = strColor;
     ug_strCurrentCardType = strType;
-    
+
     //Set meta data
     ug_currCardMeta.nCardThrown += 1;
-    if (strType === "draw2")
-    {
-        ug_currCardMeta.nForceDraw = 1;
-        ug_currCardMeta.nForceDrawValue += 2;
-    }
-    else if (strType === "draw4")
-    {
+
+    // Penalty card values (No Mercy official stacking: >= last value)
+    if (strType === "draw2") {
         ug_currCardMeta.nForceDraw = 2;
+        ug_currCardMeta.nForceDrawValue += 2;
+    } else if (strType === "draw4" || strType === "reversedraw4") {
+        ug_currCardMeta.nForceDraw = 4;
         ug_currCardMeta.nForceDrawValue += 4;
-    }
-    else
-    {
+    } else if (strType === "draw6") {
+        ug_currCardMeta.nForceDraw = 6;
+        ug_currCardMeta.nForceDrawValue += 6;
+    } else if (strType === "draw10") {
+        ug_currCardMeta.nForceDraw = 10;
+        ug_currCardMeta.nForceDrawValue += 10;
+    } else {
         ug_currCardMeta.nForceDraw = 0;
         ug_currCardMeta.nForceDrawValue = 0;
     }
 
     ug_bCanThrowAnyCard = false;
     ug_bCanDrawCard = false;
+
+    // Wild/black cards → need color picker
     if (strColor === "black")
     {
         UG_ShowEndTurnButton (false);
-        //Bring up the color picker
         UGi_WildShowColorPicker (true);
-        ug_bCanThrowSameNumber = false; //If you threw a black card then your turn is over, you cannot throw multiple black cards
+        ug_bCanThrowSameNumber = false;
+    }
+    // Colored skipeveryone → you play again (no color picker needed)
+    else if (strType === "skipeveryone")
+    {
+        ug_currCardMeta.bSkipAll = true;
+        ug_currCardMeta.strAdditionalCol = "";
+        const strCard = ug_strCurrentCardColor + "-" + ug_strCurrentCardType;
+        socket.emit ("g_UpdateThrownCardAllPlayers", strCard, ug_currCardMeta);
     }
     else
     {
-        //Player threw a non color change card... When the server send the StartNextTurn signal, the clients will all end up hiding the current color
-        ug_currCardMeta.strAdditionalCol = "";  
-
-        //I didnt throw a wild card so update the other players that I threw a card... If I threw a wild card, then update the other players AFTER I select a color...
-        const strCard = ug_strCurrentCardColor + "-" + ug_strCurrentCardType;    
+        ug_currCardMeta.strAdditionalCol = "";
+        const strCard = ug_strCurrentCardColor + "-" + ug_strCurrentCardType;
         socket.emit ("g_UpdateThrownCardAllPlayers", strCard, ug_currCardMeta);
     }
 
     UGi_WildShowColorChosen ("");   //Remove the wild color if its being shown currently
     //This will get set by the animation
-    AC_SetCurrentCardAnim (strColor + "-" + strType);    
+    AC_SetCurrentCardAnim (strColor + "-" + strType);
     UC_RemoveCard (eCard);
-    socket.emit ("g_RemoveCardFromMyDeck", strColor + "-" + strType)
+    socket.emit ("g_RemoveCardFromMyDeck", strColor + "-" + strType);
+
+    // Sound effect: FAHHH when you play a +10
+    if (strType === "draw10") {
+        UGi_PlayFahSound();
+    }
+
+    // No Mercy: Show UNO button if player is about to have 1 card
+    UGi_CheckShowUnoButton();
+
+
 
     //if ug_bCanThrowSameNumber is false then I threw a black card and hence my turn will get over as soon as I choose a color... Dont call end_turn as it will be called once I choose a color...
     if (ug_bCanThrowSameNumber)
     {
+        if (ug_bNoMercy) {
+            // No Mercy: Card 0 - rotate all hands (only on first throw)
+            if (strType === "0" && ug_currCardMeta.nCardThrown === 1)
+            {
+                socket.emit("g_SwapAllHands");
+            }
+
+            // No Mercy: Card 7 - swap with chosen player (only on first throw)
+            if (strType === "7" && ug_currCardMeta.nCardThrown === 1)
+            {
+                UGi_ShowSwapPlayerPicker();
+                return;
+            }
+
+            // No Mercy: Discard All
+            if (strType === "discardall")
+            {
+                UGi_DiscardAllSameColor(strColor);
+                UGi_EndTurn();
+                return;
+            }
+        }
+
         let bHasValidNumber = false;
         const cards = UGi_GetSelfCardsFromHtml();
-        console.log (cards);
         for (let i = 0; i < cards.length && !bHasValidNumber; i++)
         {
             const curCard = cards[i];
@@ -681,9 +955,25 @@ function UG_CardOnClick(eCard) {
 
         if (bHasValidNumber)
             UG_ShowEndTurnButton (true);
-        else    
+        else
             UGi_EndTurn ();
     }
+}
+
+/**
+ * Discard All: remove all cards of the given color from own hand.
+ */
+function UGi_DiscardAllSameColor(strColor) {
+    // Remove matching cards from DOM only (server handles hand via g_DiscardAll)
+    const cardElements = uc_playerSelf.querySelectorAll(".cardCtnHor img");
+    for (let i = cardElements.length - 1; i >= 0; i--) {
+        const el = cardElements[i];
+        if (el.getAttribute("cardColor") === strColor) {
+            UC_RemoveCard(el);
+        }
+    }
+    // Server removes all matching cards in one operation
+    socket.emit("g_DiscardAll", strColor);
 }
 
 function UGi_GetSelfCardsFromHtml () {
@@ -702,42 +992,344 @@ function UGi_GetSelfCardsFromHtml () {
     return cardsArray;
 }
 
+// No Mercy: get the penalty value of a draw card type
+function UGi_GetDrawValue (strCardType)
+{
+    if (strCardType === "draw2") return 2;
+    if (strCardType === "draw4" || strCardType === "reversedraw4") return 4;
+    if (strCardType === "draw6") return 6;
+    if (strCardType === "draw10") return 10;
+    return 0;
+}
+
+function UGi_IsDrawCard (strCardType)
+{
+    return UGi_GetDrawValue(strCardType) > 0;
+}
+
 function UGi_ThrowCardIsValid (strCardCol, strCardType, strCurrentCol, strCurrentType)
 {
     if (ug_bCanThrowAnyCard)
     {
-        //Check for force draw2 and draw4
+        // Stacking rule
         if (ug_currCardMeta.nForceDraw !== 0)
         {
-            //You can only throw a draw2/draw4 in this case.. 
-            return (strCardType === strCurrentType);
+            if (ug_bNoMercy) {
+                // No Mercy: must play +X with value >= last played +X
+                const cardDraw = UGi_GetDrawValue(strCardType);
+                return cardDraw >= ug_currCardMeta.nForceDraw;
+            } else {
+                // Classic: same type only (+2 on +2, wild4 on wild4)
+                return strCardType === strCurrentType;
+            }
         }
 
         let bCanThrowCard = false;
-        //Same col or same number or if its a wild card then it can be played of if its a color chosen by the wild card then it can be played
-        if (strCardCol ===  strCurrentCol ||
-            strCardType ===  strCurrentType  ||
+        // Same color, same type, wild/black, or chosen wild color match
+        if (strCardCol === strCurrentCol ||
+            strCardType === strCurrentType ||
             strCardCol === "black" ||
-            (ug_currCardMeta.strAdditionalCol !== "" && ug_currCardMeta.strAdditionalCol === strCardCol)) 
-            { 
-                bCanThrowCard = true; 
-            }
+            (ug_currCardMeta.strAdditionalCol !== "" && ug_currCardMeta.strAdditionalCol === strCardCol))
+        {
+            bCanThrowCard = true;
+        }
 
         return bCanThrowCard;
     }
     else if (ug_bCanThrowSameNumber)
     {
-        //This happens when player has already thrown once.. In this case they can only throw the same number and no other card
-        return strCardType ===  strCurrentType; 
+        return strCardType === strCurrentType;
     }
     else
     {
-        //No card can be thrown if the flags aren't set
         return false;
     }
 }
 
 ///////////
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          No Mercy: UNO Call System
+//////////////////////////////////////////////////////////////////////////////////////////
+
+let ug_bUnoDeclared = false;
+let ug_strLastPlayerWhoPlayed = "";
+
+// UNO button is ALWAYS visible — available to everyone from the start
+function UGi_CheckShowUnoButton () {
+    // Always visible now — no-op, button stays shown
+}
+
+// UNO button click — anyone can click at any time
+// Server validates: if you don't have 1 card → penalty
+document.querySelector(".unoCallBtn").addEventListener("click", () => {
+    socket.emit("g_DeclareUno");
+    ug_bUnoDeclared = true;
+});
+
+// Server tells us someone declared UNO (with result)
+socket.on("g_PlayerDeclaredUno", (strPlayerName, bValid) => {
+    if (bValid) {
+        UGi_ShowUnoNotification(strPlayerName, true);
+    } else {
+        UGi_ShowUnoNotification(strPlayerName, false);
+    }
+});
+
+function UGi_ShowUnoNotification(name, bValid) {
+    const notif = document.createElement("div");
+    const bg = bValid ? "rgba(0,204,94,0.95)" : "rgba(239,67,67,0.95)";
+    const txt = bValid ? (name + " : UNO!") : (name + " : faux UNO! +2 penalite!");
+    notif.style.cssText =
+        "position:fixed;top:12%;left:50%;transform:translateX(-50%);" +
+        "background:" + bg + ";color:#fff;padding:12px 28px;" +
+        "border-radius:14px;font-size:18px;font-weight:700;z-index:9999;" +
+        "font-family:'Montserrat',sans-serif;text-align:center;" +
+        "box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:chatSlideDown 0.3s ease-out;";
+    notif.textContent = txt;
+    document.body.appendChild(notif);
+    setTimeout(() => {
+        notif.style.transition = "opacity 0.5s"; notif.style.opacity = "0";
+        setTimeout(() => { if (notif.parentNode) notif.parentNode.removeChild(notif); }, 500);
+    }, 2500);
+}
+
+// SPACEBAR = UNO shortcut
+document.addEventListener("keydown", (e) => {
+    // Don't trigger if typing in chat input
+    if (e.target.classList.contains("chatInput")) return;
+    if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
+        socket.emit("g_DeclareUno");
+        ug_bUnoDeclared = true;
+    }
+});
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          No Mercy: Challenge +4 System
+//////////////////////////////////////////////////////////////////////////////////////////
+
+document.querySelector(".challengeBtn").addEventListener("click", () => {
+    socket.emit("g_ChallengeDrawFour");
+    document.querySelector(".challengeBtn").style.display = "none";
+    document.querySelector(".acceptDrawBtn").style.display = "none";
+});
+
+document.querySelector(".acceptDrawBtn").addEventListener("click", () => {
+    socket.emit("g_AcceptDraw");
+    document.querySelector(".challengeBtn").style.display = "none";
+    document.querySelector(".acceptDrawBtn").style.display = "none";
+});
+
+socket.on("g_ChallengeResult", (strChallengerName, strAccusedName, bBluffDetected) => {
+    if (bBluffDetected) {
+        console.log("Challenge successful! " + strAccusedName + " was bluffing! +6 penalty!");
+    } else {
+        console.log("Challenge failed! " + strChallengerName + " draws 6 cards!");
+    }
+});
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          No Mercy: Card 0 - Swap All Hands
+//////////////////////////////////////////////////////////////////////////////////////////
+
+socket.on("g_SwapAllHandsNotify", () => {
+    console.log("Card 0 played! Everyone's hands have been rotated!");
+    UGi_StopTurnTimer();
+});
+
+socket.on("g_UpdateSelfCardsCount_NoAutoEnd", (data) => {
+    UC_SetPlayerDetails(uc_playerSelf, data, nRoundsToWin);
+
+    // If it's still our turn, re-enable play flags so we can play drawn cards
+    if (ug_bIsYourTurn) {
+        ug_bCanThrowAnyCard = true;
+        ug_bCanThrowSameNumber = true;
+        UG_ShowEndTurnButton(true);
+    }
+});
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          No Mercy: Card 7 - Swap With Player
+//////////////////////////////////////////////////////////////////////////////////////////
+
+socket.on("g_SwapWithPlayerNotify", (strSourceName, strTargetName) => {
+    console.log(strSourceName + " swapped hands with " + strTargetName + "!");
+    const swapDlg = document.querySelector(".swapDlg");
+    if (swapDlg) swapDlg.style.display = "none";
+    UGi_StopTurnTimer();
+});
+
+function UGi_ShowSwapPlayerPicker ()
+{
+    UGi_StopTurnTimer(); // Pause timer while choosing swap target
+    const swapDlg = document.querySelector(".swapDlg");
+    if (!swapDlg) return;
+
+    const playersList = swapDlg.querySelector(".swapDlg_playersList");
+    playersList.innerHTML = "";
+
+    for (let i = 0; i < nMaxPlayers; i++) {
+        const playerEle = uc_players[i];
+        if (!playerEle || playerEle.style.display === "none") continue;
+        if (playerEle === uc_playerSelf) continue;
+
+        const playerName = playerEle.querySelector("p").textContent;
+        if (!playerName) continue;
+
+        const btn = document.createElement("div");
+        btn.className = "swapDlg_playerBtn";
+        btn.textContent = playerName;
+        btn.addEventListener("click", () => {
+            socket.emit("g_SwapWithPlayer", playerName);
+            swapDlg.style.display = "none";
+            UGi_EndTurn();
+        });
+        playersList.appendChild(btn);
+    }
+
+    // Decline button — skip the swap, just end turn
+    const declineBtn = document.createElement("div");
+    declineBtn.className = "swapDlg_playerBtn swapDlg_declineBtn";
+    declineBtn.textContent = "Decline";
+    declineBtn.addEventListener("click", () => {
+        swapDlg.style.display = "none";
+        UGi_EndTurn();
+    });
+    playersList.appendChild(declineBtn);
+
+    swapDlg.style.display = "flex";
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          No Mercy: Color Roulette (victim picks color)
+//////////////////////////////////////////////////////////////////////////////////////////
+
+let ug_bRouletteActive = false;
+
+// When a colorroulette is played, the START_TURN will arrive with the roulette flag.
+// We reuse the color picker for the victim to choose a color.
+socket.on("g_ColorRouletteStart", () => {
+    ug_bRouletteActive = true;
+    UGi_StopTurnTimer(); // Pause timer while victim picks color
+    UGi_WildShowColorPicker(true);
+});
+
+// Override color picker clicks to handle roulette
+// (already handles wild color choice — add roulette check)
+// Roulette listener is now integrated into the main wild color picker above (line 624)
+
+socket.on("g_ColorRouletteResult", (strPlayerName, nDrawnCount, strColor) => {
+    console.log(strPlayerName + " drew " + nDrawnCount + " cards for Color Roulette (" + strColor + ")");
+});
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          No Mercy: Elimination notification
+//////////////////////////////////////////////////////////////////////////////////////////
+
+// Special rule notification (e.g. 2-player Reverse+4)
+socket.on("g_SpecialRuleNotify", (strMessage) => {
+    const notif = document.createElement("div");
+    notif.style.cssText =
+        "position:fixed;top:8%;left:50%;transform:translateX(-50%);" +
+        "background:rgba(160,100,255,0.95);color:#fff;padding:12px 28px;" +
+        "border-radius:14px;font-size:16px;font-weight:700;z-index:9999;" +
+        "font-family:'Montserrat',sans-serif;text-align:center;" +
+        "box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:chatSlideDown 0.3s ease-out;" +
+        "max-width:80vw;";
+    notif.textContent = strMessage;
+    document.body.appendChild(notif);
+    setTimeout(() => {
+        notif.style.transition = "opacity 0.5s"; notif.style.opacity = "0";
+        setTimeout(() => { if (notif.parentNode) notif.parentNode.removeChild(notif); }, 500);
+    }, 4000);
+});
+
+socket.on("g_PlayerEliminated", (strPlayerName) => {
+    console.log("ELIMINATED: " + strPlayerName);
+    const ePlayer = UGi_GetPlayerFromName(strPlayerName);
+    if (ePlayer) {
+        ePlayer.style.opacity = "0.3";
+        ePlayer.style.filter = "grayscale(100%)";
+    }
+});
+
+// Auto UNO penalty notification
+socket.on("g_AutoUnoPenalty", (strPlayerName) => {
+    console.log(strPlayerName + " forgot to say UNO! +2 penalty!");
+    // Show a brief notification on screen
+    UGi_ShowAutoUnoNotification(strPlayerName);
+});
+
+function UGi_ShowAutoUnoNotification(strPlayerName) {
+    const notif = document.createElement("div");
+    notif.style.cssText =
+        "position:fixed;top:15%;left:50%;transform:translateX(-50%);" +
+        "background:rgba(239,67,67,0.95);color:#fff;padding:14px 32px;" +
+        "border-radius:14px;font-size:18px;font-weight:700;z-index:9999;" +
+        "font-family:'Montserrat',sans-serif;text-align:center;" +
+        "box-shadow:0 8px 30px rgba(239,67,67,0.5);" +
+        "animation:chatSlideDown 0.3s ease-out;";
+    notif.textContent = strPlayerName + " n'a pas dit UNO ! +2 cartes !";
+    document.body.appendChild(notif);
+    setTimeout(() => {
+        notif.style.transition = "opacity 0.5s";
+        notif.style.opacity = "0";
+        setTimeout(() => { if (notif.parentNode) notif.parentNode.removeChild(notif); }, 500);
+    }, 3000);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          No Mercy: Turn Timer (30 seconds)
+//////////////////////////////////////////////////////////////////////////////////////////
+
+let ug_turnTimer = null;
+let ug_turnTimerSeconds = 30;
+
+function UGi_StartTurnTimer() {
+    UGi_StopTurnTimer();
+    ug_turnTimerSeconds = 30;
+
+    const timerEl = document.querySelector(".turnTimer");
+    if (timerEl) {
+        timerEl.style.display = "flex";
+        timerEl.textContent = ug_turnTimerSeconds;
+    }
+
+    ug_turnTimer = setInterval(() => {
+        ug_turnTimerSeconds--;
+        if (timerEl) timerEl.textContent = ug_turnTimerSeconds;
+
+        if (ug_turnTimerSeconds <= 0) {
+            UGi_StopTurnTimer();
+            // Auto-draw if it's your turn and timer ran out
+            if (ug_bIsYourTurn) {
+                if (ug_currCardMeta.nForceDraw !== 0) {
+                    // Must resolve stack
+                    UGi_DrawCard(ug_currCardMeta.nForceDrawValue);
+                    ug_currCardMeta.nCardThrown = 0;
+                    ug_bCanDrawCard = false;
+                    // End turn after forced draw
+                } else {
+                    socket.emit("g_DrawUntilPlayable");
+                    ug_bCanDrawCard = false;
+                }
+                ug_currCardMeta.nCardThrown = 0;
+                setTimeout(() => {
+                    if (ug_bIsYourTurn) UGi_EndTurn();
+                }, 1500);
+            }
+        }
+    }, 1000);
+}
+
+function UGi_StopTurnTimer() {
+    if (ug_turnTimer) {
+        clearInterval(ug_turnTimer);
+        ug_turnTimer = null;
+    }
+    const timerEl = document.querySelector(".turnTimer");
+    if (timerEl) timerEl.style.display = "none";
+}
 
 
 function UGi_EndTurn ()
@@ -751,10 +1343,251 @@ function UGi_EndTurn ()
         //No card was thrown... Reset some meta data because draw2 or draw4 was not thrown
         ug_currCardMeta.nForceDraw = 0;
         ug_currCardMeta.nForceDrawValue = 0;
+        ug_currCardMeta.bSkipAll = false;
     }
 
-    const strCard = ug_strCurrentCardColor + "-" + ug_strCurrentCardType;    
+    const strCard = ug_strCurrentCardColor + "-" + ug_strCurrentCardType;
     socket.emit ("g_PlayerEndTurn", strCard, ug_currCardMeta);
 
     ug_currCardMeta.nCardThrown = 0;
+    ug_currCardMeta.bSkipAll = false;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          Emoji Reaction System
+//////////////////////////////////////////////////////////////////////////////////////////
+
+const ug_emojiMap = {
+    "laugh": "\u{1F602}",
+    "rage": "\u{1F621}",
+    "skull": "\u{1F480}",
+    "fire": "\u{1F525}",
+    "clown": "\u{1F921}"
+};
+
+let ug_bEmojiCooldown = false;
+
+// Toggle emoji picker
+document.querySelector(".emojiToggleBtn").addEventListener("click", () => {
+    const list = document.querySelector(".emojiList");
+    if (list.style.display === "none" || list.style.display === "") {
+        list.style.display = "flex";
+    } else {
+        list.style.display = "none";
+    }
+});
+
+// Send emoji when clicked
+document.querySelectorAll(".emojiBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        if (ug_bEmojiCooldown) return;
+
+        const emojiKey = btn.getAttribute("data-emoji");
+        socket.emit("g_SendEmoji", emojiKey);
+
+        // Cooldown: prevent spam (2 seconds)
+        ug_bEmojiCooldown = true;
+        document.querySelectorAll(".emojiBtn").forEach(b => b.classList.add("cooldown"));
+        setTimeout(() => {
+            ug_bEmojiCooldown = false;
+            document.querySelectorAll(".emojiBtn").forEach(b => b.classList.remove("cooldown"));
+        }, 2000);
+
+        // Hide picker after sending
+        document.querySelector(".emojiList").style.display = "none";
+    });
+});
+
+// Receive emoji from any player (including self)
+socket.on("g_ReceiveEmoji", (strPlayerName, strEmojiKey) => {
+    const emojiChar = ug_emojiMap[strEmojiKey];
+    if (!emojiChar) return;
+
+    UGi_SpawnFloatingEmoji(emojiChar, strPlayerName);
+});
+
+function UGi_SpawnFloatingEmoji (emojiChar, strPlayerName)
+{
+    const container = document.querySelector(".emojiFloatContainer");
+    if (!container) return;
+
+    // Find the player position to spawn emoji near them
+    let spawnX = 50;  // default center %
+    let spawnY = 40;
+    const ePlayer = UGi_GetPlayerFromName(strPlayerName);
+    if (ePlayer && ePlayer.offsetParent !== null) {
+        const rect = ePlayer.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        if (containerRect.width > 0 && containerRect.height > 0) {
+            spawnX = Math.max(5, Math.min(90, ((rect.left + rect.width / 2 - containerRect.left) / containerRect.width) * 100));
+            spawnY = Math.max(10, Math.min(75, ((rect.top + rect.height / 2 - containerRect.top) / containerRect.height) * 100));
+        }
+    }
+
+    // Create floating emoji element
+    const emojiEl = document.createElement("div");
+    emojiEl.className = "emojiFloat";
+    emojiEl.style.left = spawnX + "%";
+    emojiEl.style.top = spawnY + "%";
+
+    // Add slight random offset for multiple emojis
+    emojiEl.style.marginLeft = (Math.random() * 60 - 30) + "px";
+
+    // Build safely (no innerHTML with user data)
+    const emojiText = document.createTextNode(emojiChar);
+    emojiEl.appendChild(emojiText);
+
+    const senderSpan = document.createElement("span");
+    senderSpan.className = "emojiSender";
+    senderSpan.textContent = strPlayerName;
+    emojiEl.appendChild(senderSpan);
+
+    container.appendChild(emojiEl);
+
+    // Remove after animation completes
+    setTimeout(() => {
+        if (emojiEl.parentNode) {
+            emojiEl.parentNode.removeChild(emojiEl);
+        }
+    }, 3000);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          Leave Room
+//////////////////////////////////////////////////////////////////////////////////////////
+
+document.querySelector(".leaveRoomBtn").addEventListener("click", () => {
+    if (confirm("Quitter la room ?")) {
+        socket.emit("g_PlayerLeaveRoom");
+        window.location = "/index.html";
+    }
+});
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          Rules Hint Panel
+//////////////////////////////////////////////////////////////////////////////////////////
+
+document.querySelector(".rulesToggleBtn").addEventListener("click", () => {
+    const panel = document.querySelector(".rulesPanel");
+    panel.style.display = (panel.style.display === "none") ? "flex" : "none";
+});
+document.querySelector(".rulesCloseBtn").addEventListener("click", () => {
+    document.querySelector(".rulesPanel").style.display = "none";
+});
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////          Chat System
+//////////////////////////////////////////////////////////////////////////////////////////
+
+let ug_bChatOpen = false;
+let ug_nUnreadCount = 0;
+let ug_strMyName = "";
+
+/**
+ * Grab our player name from the DOM. Called on every relevant event
+ * until the name is captured.
+ */
+function UGi_CaptureMyName() {
+    if (ug_strMyName) return;
+    const nameEl = uc_playerSelf ? uc_playerSelf.querySelector("p") : null;
+    if (nameEl && nameEl.textContent && nameEl.textContent.trim()) {
+        ug_strMyName = nameEl.textContent.trim();
+        console.log("Chat: my name = " + ug_strMyName);
+    }
+}
+// Try to capture name periodically until found
+const _nameInterval = setInterval(() => {
+    UGi_CaptureMyName();
+    if (ug_strMyName) clearInterval(_nameInterval);
+}, 1000);
+
+// Toggle chat panel
+document.querySelector(".chatToggleBtn").addEventListener("click", () => {
+    const panel = document.querySelector(".chatPanel");
+    ug_bChatOpen = !ug_bChatOpen;
+    panel.style.display = ug_bChatOpen ? "flex" : "none";
+
+    if (ug_bChatOpen) {
+        // Reset badge
+        ug_nUnreadCount = 0;
+        const badge = document.querySelector(".chatBadge");
+        badge.style.display = "none";
+        // Focus input
+        document.querySelector(".chatInput").focus();
+        // Scroll to bottom
+        const msgs = document.querySelector(".chatMessages");
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+});
+
+// Close chat
+document.querySelector(".chatCloseBtn").addEventListener("click", () => {
+    ug_bChatOpen = false;
+    document.querySelector(".chatPanel").style.display = "none";
+});
+
+// Send message
+function UGi_SendChatMessage() {
+    const input = document.querySelector(".chatInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    console.log("Chat: sending '" + text + "' as '" + ug_strMyName + "'");
+    socket.emit("g_SendChatMessage", text);
+    input.value = "";
+    input.focus();
+}
+
+document.querySelector(".chatSendBtn").addEventListener("click", UGi_SendChatMessage);
+document.querySelector(".chatInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        UGi_SendChatMessage();
+    }
+    // Prevent game key shortcuts while typing in chat
+    e.stopPropagation();
+});
+
+// Receive chat message
+socket.on("g_ReceiveChatMessage", (strPlayerName, strText) => {
+    console.log("Chat: received from '" + strPlayerName + "': " + strText);
+    UGi_AddChatMessage(strPlayerName, strText);
+});
+
+function UGi_AddChatMessage(strPlayerName, strText) {
+    const container = document.querySelector(".chatMessages");
+    if (!container) return;
+
+    const isSelf = (strPlayerName === ug_strMyName);
+
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "chatMsg " + (isSelf ? "self" : "other");
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "chatMsgName";
+    nameSpan.textContent = strPlayerName;
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "chatMsgText";
+    textSpan.textContent = strText;
+
+    msgDiv.appendChild(nameSpan);
+    msgDiv.appendChild(textSpan);
+    container.appendChild(msgDiv);
+
+    // Auto-scroll
+    container.scrollTop = container.scrollHeight;
+
+    // Badge if chat is closed
+    if (!ug_bChatOpen && !isSelf) {
+        ug_nUnreadCount++;
+        const badge = document.querySelector(".chatBadge");
+        badge.textContent = ug_nUnreadCount;
+        badge.style.display = "flex";
+    }
+
+    // Limit messages in DOM (keep last 100)
+    while (container.children.length > 100) {
+        container.removeChild(container.firstChild);
+    }
 }

@@ -11,17 +11,21 @@
 
     flex-direction: column;
     align-items: center;
-    /* justify-content: space-between; */
 
     left: 50%;
-    top: 60%;
+    top: 55%;
     min-height: 20rem;
     min-width: 35rem;
 
     transform: translate(-50%, -50%);
 
-    background: #1B262C;
-    box-shadow: 0px 0px 5px 8px rgba(0, 0, 0, 0.25);
+    background: rgba(27, 38, 44, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    z-index: 30;
+    overflow: hidden;
 }
 
 /*
@@ -37,15 +41,16 @@
     margin-bottom: 1.0rem;
 
     width: 100%;
-    min-height: 3rem;
-    background: #082D46;
-    box-shadow: 0px 4px 3px 1px rgba(0, 0, 0, 0.25);
+    min-height: 3.5rem;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .scoreDlg .scoreDlg_Header p {
-    font-size: 25px;
-    padding: 0rem 1rem;
+    font-size: 22px;
+    padding: 0rem 1.2rem;
     color: #efefef;
+    font-weight: 600;
 }
 
 .scoreDlg_HeaderRight {
@@ -54,19 +59,28 @@
     align-items: center;
     justify-content: space-between;
 }
+
+.scoreDlg_HeaderRight p {
+    color: #FFD700 !important;
+    letter-spacing: 3px;
+    font-weight: bold !important;
+}
+
 .scoreDlg .scoreDlg_HeaderRight .scoreDlg_CloseBtn {
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 50%;
-
-    background: #D31C1C;
-    box-shadow: 0px 0px 3px 2px rgba(0, 0, 0, 0.25);
-    margin: 0 0.5rem;
-    transition: background 0.15s
+    background: linear-gradient(135deg, #FF6B6B, #D31C1C);
+    box-shadow: 0 2px 8px rgba(211, 28, 28, 0.4);
+    margin: 0 0.8rem;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 .scoreDlg .scoreDlg_HeaderRight .scoreDlg_CloseBtn:hover {
-    background: #FFAAAA;
+    background: linear-gradient(135deg, #FFAAAA, #FF6B6B);
+    transform: scale(1.15);
 }
+
 /*
 ////////////////////////////////
 //////////  Score - Players
@@ -78,9 +92,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-
-    /* height: 80%; */
     width: 100%;
+    padding: 0 10px;
 }
 
 .scoreDlg_player {
@@ -90,12 +103,19 @@
     justify-content: space-between;
     flex-direction: row;
 
-    width: 45%; /* Note: this could be 100% as well so that it occupies the entire screen*/
-    background: #0F4C75;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    padding: 0.4rem 0.4rem;
-    margin: 0px 10px;
-    margin-bottom: 10px;
+    width: 45%;
+    background: linear-gradient(135deg, rgba(15, 76, 117, 0.6), rgba(15, 76, 117, 0.3));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 0.5rem 0.8rem;
+    margin: 0px 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
+
+.scoreDlg_player:hover {
+    background: linear-gradient(135deg, rgba(15, 76, 117, 0.8), rgba(15, 76, 117, 0.5));
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .scoreDlg_row {
@@ -107,9 +127,14 @@
 }
 
 .scoreDlg_playersCtn .scoreDlg_player p {
-    font-size: 20px;
+    font-size: 18px;
     text-align: center;
     color: #efefef;
+}
+
+.scoreDlg_playerScore {
+    color: #FFD700 !important;
+    font-weight: 600;
 }
 
 /*
@@ -124,23 +149,27 @@
     align-items: center;
     justify-content: center;
 
-    bottom: 0.5rem;
-    padding: 1rem 1rem;
+    bottom: 1rem;
+    padding: 12px 36px;
 
-    background: #3282B8;
-    border-radius: 30px;
+    background: linear-gradient(135deg, #00CC5E, #00A34B);
+    border-radius: 50px;
     min-width: 10rem;
-
-    transition: background 0.15s;
+    box-shadow: 0 4px 20px rgba(0, 204, 94, 0.3);
+    transition: all 0.3s;
+    cursor: pointer;
 }
 
 .score_nextBtn p {
     padding: 0rem 0.5rem;
-    font-size: 22px;
-    cursor: default;
-    color: #efefef;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
 }
 
 .score_nextBtn:hover {
-    background: #58A6DB;
+    background: linear-gradient(135deg, #00FF75, #00CC5E);
+    box-shadow: 0 6px 30px rgba(0, 204, 94, 0.5);
+    transform: translateY(-2px);
 }

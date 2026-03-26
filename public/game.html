@@ -61,6 +61,7 @@
             <img class="deckCard"              src="Game/Images/bottom-black-back.svg">
             <img class="currentCard"           src="">
             <div class="wildChooseColor">
+                <p class="colorPickerLabel">Choose Color</p>
                 <div blockCol="red"    class="red     block"></div>
                 <div blockCol="yellow" class="yellow  block"></div>
                 <div blockCol="green"  class="green   block"></div>
@@ -68,6 +69,13 @@
             </div>
             <h1 class="forceCardCount">+2</h1>
             <div class="wildColorChoosen"></div>
+            <div class="turnTimer" style="display:none;">30</div>
+
+            <!-- UNO call button — always visible -->
+            <div class="unoCallBtn">UNO!</div>
+            <!-- No Mercy: Challenge +4 button -->
+            <div class="challengeBtn" style="display:none;">CHALLENGE +4</div>
+            <div class="acceptDrawBtn" style="display:none;">ACCEPT</div>
         </div>
 
 
@@ -189,7 +197,23 @@
         </div>
     </section>
 
-     <!-- 
+    <!-- Floating emoji container (emojis appear here when sent) -->
+    <div class="emojiFloatContainer"></div>
+
+     <!--
+        ///////////////////////////////////////////////////////////////////////////
+        ///////////////         Dialog - Swap player picker (Card 7)
+        ///////////////////////////////////////////////////////////////////////////
+     -->
+    <section class="swapDlg" style="display:none;">
+        <div class="swapDlg_header">
+            <p>Choose a player to swap hands with</p>
+        </div>
+        <div class="swapDlg_playersList">
+        </div>
+    </section>
+
+     <!--
         ///////////////////////////////////////////////////////////////////////////
         ///////////////         Dialog - Allow players to join room
         ///////////////////////////////////////////////////////////////////////////
@@ -218,6 +242,87 @@
     
 
 </div>
+
+<!-- ═══ Overlays: outside .main to avoid overflow:hidden clipping ═══ -->
+
+<!-- Leave Room Button -->
+<div class="leaveRoomBtn" title="Quitter la room">&#10005;</div>
+
+<!-- Rules Hint Panel -->
+<div class="rulesBox">
+    <div class="rulesToggleBtn" title="Rules">?</div>
+    <div class="rulesPanel" style="display:none;">
+        <div class="rulesHeader">
+            <span>Regles No Mercy</span>
+            <div class="rulesCloseBtn">&times;</div>
+        </div>
+        <div class="rulesContent">
+            <div class="rulesSection">
+                <h3>Cartes numerotees</h3>
+                <div class="ruleItem"><span class="ruleBadge num">0</span> <b>Rotation</b> — Tous les joueurs passent leur main au suivant</div>
+                <div class="ruleItem"><span class="ruleBadge num">1-6, 8-9</span> Jouable si meme couleur ou meme numero</div>
+                <div class="ruleItem"><span class="ruleBadge num">7</span> <b>Echange</b> — Tu DOIS echanger ta main avec un joueur</div>
+            </div>
+            <div class="rulesSection">
+                <h3>Cartes Action (colorees)</h3>
+                <div class="ruleItem"><span class="ruleBadge action">Skip</span> Le joueur suivant perd son tour</div>
+                <div class="ruleItem"><span class="ruleBadge action">Reverse</span> Inverse le sens (2 joueurs = Skip)</div>
+                <div class="ruleItem"><span class="ruleBadge draw">+2</span> Suivant pioche 2 et perd son tour</div>
+                <div class="ruleItem"><span class="ruleBadge draw">+4</span> Suivant pioche 4 et perd son tour</div>
+                <div class="ruleItem"><span class="ruleBadge action">Poser tout</span> Pose TOUTES tes cartes de cette couleur</div>
+                <div class="ruleItem"><span class="ruleBadge action">Skip All</span> Passe tout le monde, tu rejoues</div>
+            </div>
+            <div class="rulesSection">
+                <h3>Cartes Blanches (Wild)</h3>
+                <div class="ruleItem"><span class="ruleBadge wild">Reverse +4</span> Inverse + suivant pioche 4. <b>2J:</b> TU pioches 4!</div>
+                <div class="ruleItem"><span class="ruleBadge wild">+6</span> Suivant pioche 6 et perd son tour</div>
+                <div class="ruleItem"><span class="ruleBadge wild">+10</span> Suivant pioche 10 — DEVASTATEUR</div>
+                <div class="ruleItem"><span class="ruleBadge wild">Roulette</span> Suivant choisit couleur, pioche jusqu'au match</div>
+            </div>
+            <div class="rulesSection">
+                <h3>Regles speciales</h3>
+                <div class="ruleItem"><span class="ruleBadge stack">Stack</span> Reponds avec +X de valeur &gt;= la derniere (+2&rarr;+4&rarr;+6&rarr;+10)</div>
+                <div class="ruleItem"><span class="ruleBadge elim">25 cartes</span> 25+ cartes en main = <b>ELIMINE</b></div>
+                <div class="ruleItem"><span class="ruleBadge uno">UNO!</span> 1 carte restante? Annonce UNO ou +2 penalite</div>
+                <div class="ruleItem"><span class="ruleBadge draw">Pioche</span> Pas de carte jouable? Pioche jusqu'a en avoir une</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chat -->
+<div class="chatBox">
+    <div class="chatToggleBtn" title="Chat">
+        <span class="chatIcon">&#9993;</span>
+        <span class="chatBadge" style="display:none;">0</span>
+    </div>
+    <div class="chatPanel" style="display:none;">
+        <div class="chatHeader">
+            <span>Chat</span>
+            <div class="chatCloseBtn">&times;</div>
+        </div>
+        <div class="chatMessages">
+            <div class="chatMsg system">Chat ready</div>
+        </div>
+        <div class="chatInputArea">
+            <input type="text" class="chatInput" placeholder="Message..." maxlength="200" autocomplete="off" />
+            <div class="chatSendBtn">&#10148;</div>
+        </div>
+    </div>
+</div>
+
+<!-- Emoji bar -->
+<div class="emojiBar">
+    <div class="emojiToggleBtn">&#128172;</div>
+    <div class="emojiList" style="display:none;">
+        <div class="emojiBtn" data-emoji="laugh">&#128514;</div>
+        <div class="emojiBtn" data-emoji="rage">&#128545;</div>
+        <div class="emojiBtn" data-emoji="skull">&#128128;</div>
+        <div class="emojiBtn" data-emoji="fire">&#128293;</div>
+        <div class="emojiBtn" data-emoji="clown">&#129313;</div>
+    </div>
+</div>
+
 </main>
 
 <script language="javascript" src="/socket.io/socket.io.js"></script>

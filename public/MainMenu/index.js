@@ -66,34 +66,46 @@ let bCanClickMainMenuBtns = true;
 
 let strPlayerName = "";
 let strRoomCode = "";
+let strGameMode = "nomercy"; // "nomercy" or "classic"
+
+// Game mode selector toggle
+document.querySelectorAll(".gameModeBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".gameModeBtn").forEach(b => b.classList.remove("gameModeActive"));
+        btn.classList.add("gameModeActive");
+        strGameMode = btn.getAttribute("data-mode");
+    });
+});
 
 //////////////////////////////
 //////////   Main menu
 //Create a room btn
 e_createRoomBtn.addEventListener ('click', () => {
-        if (!bCanClickMainMenuBtns) return;
-
-        e_enterName_error.style.display = "none"; //disable the error message
-    e_enterName_dlgTitle.textContent = "Create A Room"
-    //Show the pop up to enter a name
+    if (!bCanClickMainMenuBtns) return;
+    e_enterName_error.style.display = "none";
+    e_enterName_dlgTitle.textContent = "Create A Room";
     e_enterNameDlg.style.display = "flex";
-    e_enterName_codeField.style.display = "none"; //Dont display the enter code field
+    e_enterName_codeField.style.display = "none";
     e_enterName_nameField.style.display = "flex";
     e_enterName_submitBtn.style.display = "flex";
-    
+    // Show game mode selector for room creator
+    const modeEl = document.querySelector(".enterName_GameMode");
+    if (modeEl) modeEl.style.display = "flex";
     nEnterNameDlgState = StateEnterName_CreateRoom;
 });
 
 //Join a room btn
 e_joinRoomBtn.addEventListener ('click', () => {
     if (!bCanClickMainMenuBtns) return;
-    e_enterName_error.style.display = "none"; //disable the error message
-    e_enterName_dlgTitle.textContent = "Join A Room"
+    e_enterName_error.style.display = "none";
+    e_enterName_dlgTitle.textContent = "Join A Room";
     e_enterNameDlg.style.display = "flex";
-    e_enterName_codeField.style.display = "flex"; //Dont display the enter code field
+    e_enterName_codeField.style.display = "flex";
     e_enterName_nameField.style.display = "flex";
     e_enterName_submitBtn.style.display = "flex";
-
+    // Hide game mode selector when joining (host chooses)
+    const modeEl = document.querySelector(".enterName_GameMode");
+    if (modeEl) modeEl.style.display = "none";
     nEnterNameDlgState = StateEnterName_JoinRoom;
 });
 
@@ -136,8 +148,8 @@ e_enterName_submitBtn.addEventListener ('click', () => {
     e_enterName_error.style.display = "none";
     if (nEnterNameDlgState === StateEnterName_CreateRoom)
     {
-        //Create a room
-        socket.emit ("m_CreateRoom", strPlayerName);
+        //Create a room with game mode
+        socket.emit ("m_CreateRoom", strPlayerName, strGameMode);
 
     } else if (nEnterNameDlgState === StateEnterName_JoinRoom)
     {
@@ -300,11 +312,11 @@ e_roomDlgStartGameBtn.addEventListener ("click", () => {
     
 })
 
-socket.on ("m_RedirectToGame", (strId) => {
+socket.on ("m_RedirectToGame", (strId, strMode) => {
     if (!strId) { console.log ("Error..."); return; }
-    // console.log ("Redirecting: Id = " + strId);
     bRedirecting = true;
-    window.location = "/game.html?id=" + strId;
+    const mode = strMode || "nomercy";
+    window.location = "/game.html?id=" + strId + "&mode=" + mode;
 });
 
 

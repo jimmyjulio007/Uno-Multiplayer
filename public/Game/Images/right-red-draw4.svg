@@ -1,0 +1,10 @@
+<svg width="273" height="178" viewBox="0 0 273 178" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.485352" y="177.295" width="177" height="272" transform="rotate(-90 0.485352 177.295)" fill="#EF4343"/>
+<path d="M37.4305 18.0755C42.6626 10.6034 49.507 4.68033 57.5581 0.297287H146.847C160.291 5.33215 173.796 12.3875 186.738 21.4492C242.945 60.8057 267.227 123.105 240.974 160.598C236.17 167.46 230.006 173.015 222.796 177.271L128.75 177.296C116.237 172.35 103.708 165.656 91.6668 157.225C35.4598 117.868 11.1774 55.5689 37.4305 18.0755Z" fill="white"/>
+<text x="21" y="170" font-family="Arial, sans-serif" font-weight="bold" font-size="18" fill="white" transform="rotate(-90 21 170)">+4</text>
+<text x="252" y="33" font-family="Arial, sans-serif" font-weight="bold" font-size="18" fill="white" transform="rotate(-90 252 33)">+4</text>
+<rect x="105" y="137" width="51" height="80" rx="9.5" transform="rotate(-90 105 137)" fill="#EF4343" stroke="#111111"/>
+<rect x="90" y="117" width="51" height="80" rx="9.5" transform="rotate(-90 90 117)" fill="#EF4343" stroke="#111111"/>
+<rect x="105" y="97" width="51" height="80" rx="9.5" transform="rotate(-90 105 97)" fill="#EF4343" stroke="#111111"/>
+<rect x="90" y="77" width="51" height="80" rx="9.5" transform="rotate(-90 90 77)" fill="#EF4343" stroke="#111111"/>
+</svg>

@@ -12,10 +12,10 @@ a {
     color: inherit;
 }
 body {
-    background-color: #2E2E2E;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
     font-family: 'Montserrat', sans-serif;
+    overflow: hidden;
 }
-
 
 .logoContainer {
     --logoBlockSize: 65px;
@@ -26,16 +26,17 @@ body {
 
 input[type=text] {
     width: 100%;
-    padding: 10px 14px;
-    margin: 4px 0;
-
-    border: 2px solid #bbb;
-    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 6px 0;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
     outline: none;
-    transition: border 0.4s;
+    transition: border 0.3s, box-shadow 0.3s;
+    font-size: 16px;
 }
 input[type=text]:focus {
-    border: 2px solid #555;
+    border: 2px solid rgba(255,255,255,0.4);
+    box-shadow: 0 0 15px rgba(50, 130, 184, 0.3);
 }
 
 /*
@@ -48,38 +49,145 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-
     height: 100vh;
+    position: relative;
+}
+
+/* Animated background particles */
+main::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(239, 85, 85, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 102, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(0, 204, 94, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 70% 70%, rgba(255, 245, 15, 0.05) 0%, transparent 50%);
+    animation: bgPulse 8s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes bgPulse {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 
 .main {
-    background-color: #525464;    
-    height: 80%;
-    width: 80%;
+    background: rgba(40, 42, 60, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    height: 85%;
+    width: 85%;
+    max-width: 1100px;
+    max-height: 700px;
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.4),
+        0 0 100px rgba(50, 130, 184, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative floating cards in background */
+.main::before, .main::after {
+    content: '';
+    position: absolute;
+    border-radius: 12px;
+    opacity: 0.04;
+    pointer-events: none;
+}
+.main::before {
+    width: 120px;
+    height: 180px;
+    background: #EF5555;
+    top: -30px;
+    right: 80px;
+    transform: rotate(-15deg);
+    animation: floatCard1 6s ease-in-out infinite;
+}
+.main::after {
+    width: 100px;
+    height: 150px;
+    background: #0066FF;
+    bottom: -20px;
+    left: 60px;
+    transform: rotate(12deg);
+    animation: floatCard2 7s ease-in-out infinite;
+}
+
+@keyframes floatCard1 {
+    0%, 100% { transform: rotate(-15deg) translateY(0); }
+    50% { transform: rotate(-12deg) translateY(-20px); }
+}
+@keyframes floatCard2 {
+    0%, 100% { transform: rotate(12deg) translateY(0); }
+    50% { transform: rotate(15deg) translateY(-15px); }
 }
 
 .mainPageGroup {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-around;
-
-    height: 60%;
+    justify-content: center;
+    height: 100%;
+    gap: 40px;
+    position: relative;
+    z-index: 1;
 }
 
 .main .title {
     font-family: 'Merienda', cursive;
-    font-size: 100px;
+    font-size: 110px;
     color: #EFEFEF;
+    text-shadow:
+        0 0 40px rgba(239, 85, 85, 0.3),
+        0 0 80px rgba(0, 102, 255, 0.15),
+        0 4px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 8px;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    0% {
+        text-shadow:
+            0 0 40px rgba(239, 85, 85, 0.3),
+            0 0 80px rgba(0, 102, 255, 0.15),
+            0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    100% {
+        text-shadow:
+            0 0 40px rgba(0, 204, 94, 0.3),
+            0 0 80px rgba(255, 245, 15, 0.2),
+            0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* No Mercy subtitle */
+.subtitle {
+    font-family: 'Merienda', cursive;
+    font-size: 28px;
+    color: #EF5555;
+    text-transform: uppercase;
+    letter-spacing: 12px;
+    margin-top: -15px;
+    text-shadow: 0 0 20px rgba(239, 85, 85, 0.5);
+    animation: mercyPulse 2s ease-in-out infinite;
+}
+
+@keyframes mercyPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.03); }
 }
 
 .header {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-evenly;
-    width: 100%;
+    justify-content: center;
+    gap: 5px;
 }
+
 /*
 ////////////////////////////////////////////////////////////////////////////////
 //////////                          Logo
@@ -87,43 +195,47 @@ main {
 */
 .logoContainer {
     position: relative;
-    height: 14rem;
-    width: 14rem;
+    height: 10rem;
+    width: 10rem;
+    margin-top: 10px;
 }
 
 .logoBlockCommon {
     position: absolute;
     width: var(--logoBlockSize, 65px);
     height: var(--logoBlockSize, 65px);
-    border-radius: 5px;
+    border-radius: 8px;
     transform: rotate(45deg);
-
-    animation-timing-function: linear;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     animation-delay: 0s;
     animation-iteration-count: infinite;
     animation-duration: var(--animationDuration, 5s);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.logoBlockCommon:hover {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
 }
 .redLogo {
-    background: #EF5555;
+    background: linear-gradient(135deg, #FF6B6B, #EF5555, #D43F3F);
     left: calc(50% - var(--logoBlockSize, 65px) / 2);
     top: var(--animationDefaultPos);
     animation-name: animLogoRed;
 }
 .yellowLogo {
-    background: #FFF50F;
+    background: linear-gradient(135deg, #FFF94D, #FFF50F, #E7C200);
     top: calc(50% - var(--logoBlockSize, 65px) / 2);
     right: var(--animationDefaultPos);
     animation-name: animLogoYellow;
 }
 .greenLogo {
-    background: #00CC5E;
+    background: linear-gradient(135deg, #00FF75, #00CC5E, #00A34B);
     left: calc(50% - var(--logoBlockSize, 65px) / 2);
     bottom: var(--animationDefaultPos);
     animation-name: animLogoGreen;
-
 }
 .blueLogo {
-    background: #0066FF;
+    background: linear-gradient(135deg, #4D94FF, #0066FF, #004FC5);
     top: calc(50% - var(--logoBlockSize, 65px) / 2);
     left: var(--animationDefaultPos);
     animation-name: animLogoBlue;
@@ -162,11 +274,11 @@ main {
     50%  { left: var(--animationDefaultPos); }
     75%  { left: var(--animationOutPos);     }
     100% { left: var(--animationDefaultPos); }
-} 
+}
 
 /*
 ////////////////////////////////////////////////////////////////////////////////
-//////////                          Button
+//////////                          Buttons
 ////////////////////////////////////////////////////////////////////////////////
 */
 
@@ -174,30 +286,74 @@ main {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    height: 6rem;
-    width: 28rem;
+    justify-content: center;
+    gap: 24px;
 }
 .button p {
     font-family: 'Montserrat', sans-serif;
-    font-size: 20px;
-    color: #efefef;
-    cursor: default;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: 1px;
 }
 
 .button {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem 1rem;
-
-    background: #3282B8;
-    border-radius: 30px;
-    transition: background 0.15s;
+    padding: 16px 40px;
+    border-radius: 50px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
-.button:hover {
-    background: #58A6DB;
+.createRoomBtn {
+    background: linear-gradient(135deg, #EF5555, #D43F3F);
+    box-shadow: 0 4px 20px rgba(239, 85, 85, 0.3);
+}
+.createRoomBtn:hover {
+    background: linear-gradient(135deg, #FF6B6B, #EF5555);
+    box-shadow: 0 6px 30px rgba(239, 85, 85, 0.5);
+    transform: translateY(-3px) scale(1.02);
+}
+
+.joinRoomBtn {
+    background: linear-gradient(135deg, #0066FF, #004FC5);
+    box-shadow: 0 4px 20px rgba(0, 102, 255, 0.3);
+}
+.joinRoomBtn:hover {
+    background: linear-gradient(135deg, #4D94FF, #0066FF);
+    box-shadow: 0 6px 30px rgba(0, 102, 255, 0.5);
+    transform: translateY(-3px) scale(1.02);
+}
+
+.button:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Button shine effect */
+.button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        transparent,
+        rgba(255, 255, 255, 0.08),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: buttonShine 3s ease-in-out infinite;
+}
+
+@keyframes buttonShine {
+    0% { transform: rotate(45deg) translateX(-100%); }
+    100% { transform: rotate(45deg) translateX(100%); }
 }
 
 /*
@@ -208,23 +364,23 @@ main {
 
 .roomDialog {
     position: absolute;
-    display: none;  /* None so that it is not rendered initially */
-
+    display: none;
     flex-direction: column;
     align-items: center;
-    /* justify-content: space-between; */
 
     left: 50%;
-    /* bottom: 12%; */
-    top: 60%;
+    top: 55%;
     min-height: 23rem;
-    min-width: 25rem;
-
+    min-width: 28rem;
     transform: translate(-50%, -50%);
 
-    background: #1B262C;
-    box-shadow: 0px 0px 5px 8px rgba(0, 0, 0, 0.25);
-
+    background: rgba(27, 38, 44, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    overflow: hidden;
 }
 
 /*
@@ -238,46 +394,53 @@ main {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1.0rem;
-
     width: 100%;
-    min-height: 3rem;
-    background: #082D46;
-    box-shadow: 0px 4px 3px 1px rgba(0, 0, 0, 0.25);
+    min-height: 3.5rem;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .roomDialog .roomHeader p {
-    font-size: 25px;
-    padding: 0rem 1rem;
+    font-size: 22px;
+    padding: 0rem 1.2rem;
     color: #efefef;
+    font-weight: 600;
+}
+
+.roomDialog .roomHeader .roomCode {
+    color: #FFD700;
+    font-weight: bold;
+    letter-spacing: 3px;
 }
 
 .roomDialog .roomHeader .roomCloseButton {
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 50%;
-
-    background: #D31C1C;
-    box-shadow: 0px 0px 3px 2px rgba(0, 0, 0, 0.25);
-    margin: 0 0.5rem;
-    transition: background 0.15s
+    background: linear-gradient(135deg, #FF6B6B, #D31C1C);
+    box-shadow: 0 2px 8px rgba(211, 28, 28, 0.4);
+    margin: 0 0.8rem;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 .roomDialog .roomHeader .roomCloseButton:hover {
-    background: #FFAAAA;
+    background: linear-gradient(135deg, #FFAAAA, #FF6B6B);
+    transform: scale(1.15);
 }
+
 /*
 ////////////////////////////////
 //////////  Players
 ////////////////////////////////
 */
-
 .playersContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-
+    justify-content: flex-start;
     height: 100%;
     width: 100%;
+    padding: 0 10px;
 }
 
 .roomDialogPlayer {
@@ -285,13 +448,19 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 45%;
+    background: linear-gradient(135deg, rgba(15, 76, 117, 0.6), rgba(15, 76, 117, 0.3));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 0.7rem 15%;
+    margin: 0px 6px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
 
-    width: 45%; /* Note: this could be 100% as well so that it occupies the entire screen*/
-    background: #0F4C75;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    padding: 0.6rem 15%;
-    margin: 0px 10px;
-    margin-bottom: 10px;
+.roomDialogPlayer:hover {
+    background: linear-gradient(135deg, rgba(15, 76, 117, 0.8), rgba(15, 76, 117, 0.5));
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .playersRow {
@@ -303,7 +472,7 @@ main {
 }
 
 .playersContainer .roomDialogPlayer p {
-    font-size: 20px;
+    font-size: 18px;
     text-align: center;
     color: #efefef;
 }
@@ -314,16 +483,15 @@ main {
     right: 0.5rem;
     width: 20px;
     height: 6px;
-
     transform: translateY(-50%);
-    cursor: default;
-
-    font-size: 60px;
+    cursor: pointer;
+    border-radius: 3px;
     background: #D31C1C;
-    transition: background 0.15s;
+    transition: all 0.2s;
 }
 .roomDialogPlayer .roomDialogKickPlayerBtn:hover {
-    background: #FFAAAA;
+    background: #FF6B6B;
+    transform: translateY(-50%) scale(1.2);
 }
 
 /*
@@ -337,26 +505,28 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-
-    bottom: 0.5rem;
-    padding: 1rem 1rem;
-
-    background: #3282B8;
-    border-radius: 30px;
+    bottom: 1rem;
+    padding: 12px 36px;
+    background: linear-gradient(135deg, #00CC5E, #00A34B);
+    border-radius: 50px;
     min-width: 10rem;
-
-    transition: background 0.15s;
+    box-shadow: 0 4px 20px rgba(0, 204, 94, 0.3);
+    transition: all 0.3s;
+    cursor: pointer;
 }
 
 .roomStartGameButton p {
     padding: 0rem 0.5rem;
-    font-size: 22px;
-    cursor: default;
-    color: #efefef;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
 }
 
 .roomStartGameButton:hover {
-    background: #58A6DB;
+    background: linear-gradient(135deg, #00FF75, #00CC5E);
+    box-shadow: 0 6px 30px rgba(0, 204, 94, 0.5);
+    transform: translateY(-2px);
 }
 
 /*
@@ -367,32 +537,34 @@ main {
 
 .enterNameDlg {
     position: absolute;
-    display: none;  /* Set this to none initially so the dlg doesnt show up*/
+    display: none;
     flex-direction: column;
-
     align-items: center;
-    /* justify-content: space-between; */
 
     left: 50%;
     top: 55%;
     min-height: 7rem;
-    min-width: 15rem;
-    transform: translateX(-50%);
+    min-width: 18rem;
+    transform: translate(-50%, -50%);
 
-    background: #1B262C;
-    box-shadow: 0px 0px 5px 8px rgba(0, 0, 0, 0.25);
+    background: rgba(27, 38, 44, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    overflow: hidden;
 }
 
 .enterName_errorMsg {
     display: none;
-    font-size: 18px;
-    color: #FF7070;
+    font-size: 16px;
+    color: #FF6B6B;
     text-align: left;
-
-    padding: 0.7rem 0;
-
-    max-width: 25vw;    /* Prevent the error message from getting too too large*/
+    padding: 0.7rem 1rem;
+    max-width: 25vw;
 }
+
 /*
 ////////////////////////////////
 //////////  Close button
@@ -403,31 +575,34 @@ main {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 0.4rem 0rem;
-    background: #0F4C75;
-    margin-bottom: 0.5rem;
+    padding: 0.6rem 0rem;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 0.8rem;
 }
 
 .enterName_CloseBtnContainer p {
-    padding-left: 0.8rem;
-    font-size: 20px;
-    font-weight: bold;
+    padding-left: 1rem;
+    font-size: 18px;
+    font-weight: 700;
     color: #efefef;
+    letter-spacing: 0.5px;
 }
 
 .enterName_CloseButton {
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 50%;
-    
-    background: #D31C1C;
-    box-shadow: 0px 0px 3px 2px rgba(0, 0, 0, 0.25);
-    margin: 0 0.5rem;
-    transition: background 0.15s;
+    background: linear-gradient(135deg, #FF6B6B, #D31C1C);
+    box-shadow: 0 2px 8px rgba(211, 28, 28, 0.4);
+    margin: 0 0.8rem;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
 .enterName_CloseButton:hover {
-    background: #FFAAAA;
+    background: linear-gradient(135deg, #FFAAAA, #FF6B6B);
+    transform: scale(1.15);
 }
 
 /*
@@ -441,8 +616,7 @@ main {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 0rem 1rem;
-
+    padding: 0rem 1.2rem;
     height: 80%;
     width: 100%;
 }
@@ -452,27 +626,30 @@ main {
 }
 
 .enterName_InputContainer label {
-    font-size: 20px;
-    color: #efefef;
+    font-size: 16px;
+    color: rgba(239, 239, 239, 0.8);
+    font-weight: 500;
+    margin-bottom: 4px;
 }
 
 .enterName_InputContainer input {
-    background: #3F3F3F;
-    border-color: #555;
+    background: rgba(63, 63, 63, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
     color: #efefef;
+    border-radius: 12px;
+    font-size: 16px;
 }
 
 .enterName_InputContainer input:focus {
-    border-color: #999;
+    border-color: rgba(50, 130, 184, 0.6);
+    box-shadow: 0 0 15px rgba(50, 130, 184, 0.2);
 }
 
-.enterName_Name, .enterName_Code{
+.enterName_Name, .enterName_Code {
     display: flex;
     flex-direction: column;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.8rem;
 }
-
-
 
 /*
 ////////////////////////////////
@@ -484,20 +661,98 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.6rem 1.5rem;
-
-    background: #3282B8;
-    border-radius: 20px;
-
-    margin-bottom: 0.7rem;
-    transition: background 0.15s;
+    padding: 10px 36px;
+    background: linear-gradient(135deg, #00CC5E, #00A34B);
+    border-radius: 50px;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 204, 94, 0.3);
+    transition: all 0.3s;
+    cursor: pointer;
 }
 .enterName_enterBtn p {
-    font-size: 20px;
-    color: #efefef;
-    cursor: default;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
 }
 
 .enterName_enterBtn:hover {
-    background-color: #58A6DB;
+    background: linear-gradient(135deg, #00FF75, #00CC5E);
+    box-shadow: 0 6px 25px rgba(0, 204, 94, 0.5);
+    transform: translateY(-2px);
+}
+
+.enterName_enterBtn:active {
+    transform: translateY(0);
+}
+
+/*
+////////////////////////////////////////////////////////////////////////////////
+//////////                    Version badge
+////////////////////////////////////////////////////////////////////////////////
+*/
+/*
+////////////////////////////////
+//////////  Game Mode Selector
+////////////////////////////////
+*/
+
+.enterName_GameMode {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.8rem;
+}
+.enterName_GameMode label {
+    font-size: 16px;
+    color: rgba(239, 239, 239, 0.8);
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+.gameModeSelector {
+    display: flex;
+    gap: 10px;
+}
+.gameModeBtn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: rgba(239, 239, 239, 0.6);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.gameModeBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.gameModeBtn.gameModeActive {
+    background: rgba(239, 67, 67, 0.15);
+    border-color: rgba(239, 67, 67, 0.5);
+    color: #FF6B6B;
+}
+.gameModeBtn.gameModeActive[data-mode="classic"] {
+    background: rgba(50, 130, 184, 0.15);
+    border-color: rgba(50, 130, 184, 0.5);
+    color: #4D94FF;
+}
+.gameModeIcon {
+    font-size: 18px;
+}
+
+.versionBadge {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    font-size: 13px;
+    color: rgba(239, 239, 239, 0.3);
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 1px;
+    pointer-events: none;
 }

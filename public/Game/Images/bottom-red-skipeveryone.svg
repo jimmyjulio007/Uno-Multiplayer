@@ -1,0 +1,14 @@
+<svg width="178" height="273" viewBox="0 0 178 273" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.19043" y="0.59082" width="177" height="272" fill="#EF4343"/>
+<path d="M159.41 37.5355C166.882 42.7676 172.806 49.612 177.189 57.6631V146.952C172.154 160.396 165.098 173.901 156.037 186.843C116.68 243.05 54.3809 267.332 16.8876 241.079C10.0261 236.275 4.47089 230.111 0.214858 222.901L0.189941 128.855C5.136 116.342 11.8302 103.813 20.2612 91.7718C59.6178 35.5648 121.917 11.2824 159.41 37.5355Z" fill="white"/>
+<!-- Corner skip symbols -->
+<circle cx="20" cy="21" r="14.5" stroke="white" stroke-width="4"/>
+<rect x="28" y="10" width="4.48" height="27" transform="rotate(45 28 10)" fill="white"/>
+<circle cx="156" cy="252" r="14.5" stroke="white" stroke-width="4"/>
+<rect x="164" y="241" width="4.48" height="27" transform="rotate(45 164 241)" fill="white"/>
+<!-- Center skip symbol -->
+<circle cx="89" cy="130" r="40" stroke="#EF4343" stroke-width="12"/>
+<rect x="115" y="98" width="12" height="78" transform="rotate(45 115 98)" fill="#EF4343"/>
+<!-- ALL text below -->
+<text x="89" y="195" font-family="Arial, sans-serif" font-weight="bold" font-size="22" fill="#EF4343" text-anchor="middle">ALL</text>
+</svg>

@@ -1,208 +1,119 @@
-const cards = [
-    "red-0",
-    "red-1",
-    "red-2",
-    "red-3",
-    "red-4",
-    "red-5",
-    "red-6",
-    "red-7",
-    "red-8",
-    "red-9",
-    "red-0",
-    "red-1",
-    "red-2",
-    "red-3",
-    "red-4",
-    "red-5",
-    "red-6",
-    "red-7",
-    "red-8",
-    "red-9",
-    "red-draw2",
-    "red-draw2",
-    "red-reverse",
-    "red-reverse",
-    "red-skip",
-    "red-skip",
+// ============================================================================
+//  UNO Card Deck Generator — Supports Classic (108) and No Mercy (168)
+// ============================================================================
 
-    "blue-0",
-    "blue-1",
-    "blue-2",
-    "blue-3",
-    "blue-4",
-    "blue-5",
-    "blue-6",
-    "blue-7",
-    "blue-8",
-    "blue-9",
-    "blue-0",
-    "blue-1",
-    "blue-2",
-    "blue-3",
-    "blue-4",
-    "blue-5",
-    "blue-6",
-    "blue-7",
-    "blue-8",
-    "blue-9",
-    "blue-draw2",
-    "blue-draw2",
-    "blue-reverse",
-    "blue-reverse",
-    "blue-skip",
-    "blue-skip",
+const COLORS = ["red", "blue", "green", "yellow"];
 
-    "green-0",
-    "green-1",
-    "green-2",
-    "green-3",
-    "green-4",
-    "green-5",
-    "green-6",
-    "green-7",
-    "green-8",
-    "green-9",
-    "green-0",
-    "green-1",
-    "green-2",
-    "green-3",
-    "green-4",
-    "green-5",
-    "green-6",
-    "green-7",
-    "green-8",
-    "green-9",
-    "green-draw2",
-    "green-draw2",
-    "green-reverse",
-    "green-reverse",
-    "green-skip",
-    "green-skip",
+// ── No Mercy deck (168 cards) ───────────────────────────────────────────────
+const cardsNoMercy = [];
 
-    "yellow-0",
-    "yellow-1",
-    "yellow-2",
-    "yellow-3",
-    "yellow-4",
-    "yellow-5",
-    "yellow-6",
-    "yellow-7",
-    "yellow-8",
-    "yellow-9",
-    "yellow-0",
-    "yellow-1",
-    "yellow-2",
-    "yellow-3",
-    "yellow-4",
-    "yellow-5",
-    "yellow-6",
-    "yellow-7",
-    "yellow-8",
-    "yellow-9",
-    "yellow-draw2",
-    "yellow-draw2",
-    "yellow-reverse",
-    "yellow-reverse",
-    "yellow-skip",
-    "yellow-skip",
-
-    "black-draw4",
-    "black-draw4",
-    "black-draw4",
-    "black-draw4",
-    "black-wild",
-    "black-wild",
-    "black-wild",
-    "black-wild",
-
-];
-
-module.exports.GetCard = function () 
-{
-    const r = Math.floor(Math.random() * cards.length);
-    
-    // const strCardArray = cards.splice(r,1);
-    // const strCard = strCardArray[0];
-    // cardsSeen.push(strCard);
-
-    // console.log (strCard);
-    // console.log ("Length: " + cards.length);
-    // console.log ("Length Seen: " + cardsSeen.length);
-
-    // if (cards.length == 0)
-    // {
-    //     //Copy all the cards again
-    //     for (let i = 0; i < cardsSeen.length; i++)
-    //     {
-    //         cards[i] = cardsSeen[i];
-    //     }
-    //     cardsSeen = [];
-    // }
-    return cards[r];
-}
-
-module.exports.GetCards = function (nCount)
-{
-    let cards = [];
-    for (let i = 0; i < nCount; i++)
-    {
-        cards[i] = module.exports.GetCard ();
+for (const color of COLORS) {
+    cardsNoMercy.push(color + "-0");
+    for (let n = 1; n <= 9; n++) {
+        cardsNoMercy.push(color + "-" + n);
+        cardsNoMercy.push(color + "-" + n);
+        cardsNoMercy.push(color + "-" + n);
     }
-    return cards;
+    cardsNoMercy.push(color + "-skip", color + "-skip");
+    cardsNoMercy.push(color + "-reverse", color + "-reverse");
+    cardsNoMercy.push(color + "-draw2", color + "-draw2");
+    cardsNoMercy.push(color + "-draw4", color + "-draw4");
+    cardsNoMercy.push(color + "-discardall");
+    cardsNoMercy.push(color + "-skipeveryone");
+}
+for (let i = 0; i < 4; i++) {
+    cardsNoMercy.push("black-reversedraw4");
+    cardsNoMercy.push("black-draw6");
+    cardsNoMercy.push("black-draw10");
+    cardsNoMercy.push("black-colorroulette");
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////
+// ── Classic deck (108 cards) ────────────────────────────────────────────────
+const cardsClassic = [];
+
+for (const color of COLORS) {
+    cardsClassic.push(color + "-0");
+    for (let n = 1; n <= 9; n++) {
+        cardsClassic.push(color + "-" + n);
+        cardsClassic.push(color + "-" + n);
+    }
+    cardsClassic.push(color + "-skip", color + "-skip");
+    cardsClassic.push(color + "-reverse", color + "-reverse");
+    cardsClassic.push(color + "-draw2", color + "-draw2");
+}
+for (let i = 0; i < 4; i++) {
+    cardsClassic.push("black-wild");
+    cardsClassic.push("black-draw4");
+}
+
+// ============================================================================
+//  API
+// ============================================================================
+
+function getDeckForMode(mode) {
+    return (mode === "classic") ? cardsClassic : cardsNoMercy;
+}
+
+module.exports.GetCard = function (mode) {
+    const deck = getDeckForMode(mode);
+    return deck[Math.floor(Math.random() * deck.length)];
+}
+
+module.exports.GetCards = function (nCount, mode) {
+    let result = [];
+    for (let i = 0; i < nCount; i++) {
+        result[i] = module.exports.GetCard(mode);
+    }
+    return result;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 const mapDeckCards = new Map();
 
-module.exports.GetCardDeck = function (strRoomCode)
-{
+/**
+ * Force reset the deck for a room (call at start of each new round).
+ */
+module.exports.ResetRoomDeck = function (strRoomCode, mode) {
+    const deck = CreateDeck(mode);
+    mapDeckCards.set(strRoomCode, deck);
+}
+
+module.exports.GetCardDeck = function (strRoomCode, mode) {
     let deck;
-    if (!mapDeckCards.has (strRoomCode))
-    {
-        //Create a deck
-        deck = CreateDeck();
-        mapDeckCards.set (strRoomCode, deck);
-    }
-    else
-    {
-        deck = mapDeckCards.get (strRoomCode);
+    if (!mapDeckCards.has(strRoomCode)) {
+        deck = CreateDeck(mode);
+        mapDeckCards.set(strRoomCode, deck);
+    } else {
+        deck = mapDeckCards.get(strRoomCode);
     }
 
-    if (deck.length <= 0)
-    {
-        ResetDeck (deck); 
+    if (deck.length <= 0) {
+        ResetDeck(deck, mode);
     }
 
     const r = Math.floor(Math.random() * deck.length);
-    const strCard = deck.splice(r, 1)[0];
-    return strCard;
+    return deck.splice(r, 1)[0];
 }
 
-module.exports.GetCardsDeck = function (nCount, strRoomCode)
-{
-    let cards = [];
-    for (let i = 0; i < nCount; i++)
-    {
-        cards[i] = module.exports.GetCardDeck (strRoomCode);
+module.exports.GetCardsDeck = function (nCount, strRoomCode, mode) {
+    let result = [];
+    for (let i = 0; i < nCount; i++) {
+        result[i] = module.exports.GetCardDeck(strRoomCode, mode);
     }
-    return cards;
+    return result;
 }
 
-
-
-function CreateDeck () {
+function CreateDeck (mode) {
     const newDeck = [];
-    ResetDeck (newDeck);
+    ResetDeck(newDeck, mode);
     return newDeck;
 }
 
-function ResetDeck (deck) {
-    for (let i = 0; i < cards.length; i++)
-    {
-        deck[i] = cards[i];
+function ResetDeck (deck, mode) {
+    const source = getDeckForMode(mode);
+    deck.length = 0;
+    for (let i = 0; i < source.length; i++) {
+        deck.push(source[i]);
     }
 }

@@ -1,7 +1,7 @@
 html {
     /* Do not use percentages for this value... If you do, the size of the parent container would be the orginal size before applying the negative margin */
-    --negCardMarginHor: -2rem; 
-    --negCardMarginVer: -2rem; 
+    --negCardMarginHor: -2rem;
+    --negCardMarginVer: -2rem;
 
     --hor-max-height: 10rem;
     --ver-max-width: 10rem;
@@ -10,7 +10,7 @@ html {
 
     /* ------------------------------------ */
 
-    --section-middle-height: 57%;
-    --section-top-height: 20%;
-    --section-bottom-height: 23%;
+    --section-middle-height: 50%;
+    --section-top-height: 18%;
+    --section-bottom-height: 32%;
 }

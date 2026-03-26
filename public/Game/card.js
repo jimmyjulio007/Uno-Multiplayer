@@ -179,7 +179,6 @@ function UC_SetPlayerDetails (player, playerDetails, nRoundsToWin)
     if (!player || !playerDetails) { console.log ("Something went wrong"); return;}
 
     player.querySelector("p").textContent = playerDetails.name;
-    // player.querySelector("p").textContent = `${playerDetails.name} (${playerDetails.winCount}/${nRoundsToWin})`;
 
     UCi_RemoveAllCards (player);
 
@@ -187,6 +186,9 @@ function UC_SetPlayerDetails (player, playerDetails, nRoundsToWin)
     {
         UC_AddCard (player, playerDetails.cards[i]);
     }
+
+    // Update card count badge
+    UCi_UpdateCardCount(player, playerDetails.cards.length);
 }
 function UC_SetPlayerCards (player, cards)
 {
@@ -196,6 +198,39 @@ function UC_SetPlayerCards (player, cards)
     for (let i = 0; i < cards.length; i++)
     {
         UC_AddCard (player, cards[i]);
+    }
+
+    // Update card count badge
+    UCi_UpdateCardCount(player, cards.length);
+}
+
+/**
+ * Show/update a card count badge on each player.
+ */
+function UCi_UpdateCardCount(player, count) {
+    let badge = player.querySelector(".cardCountBadge");
+    if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "cardCountBadge";
+        badge.setAttribute("data-prev", "0");
+        player.appendChild(badge);
+    }
+
+    const prev = parseInt(badge.getAttribute("data-prev") || "0");
+    badge.textContent = count;
+    badge.setAttribute("data-prev", count.toString());
+    badge.style.display = (count > 0) ? "flex" : "none";
+
+    if (count === prev || prev === 0) return;
+
+    // Animate: red pulse when cards increase, green flash when decrease
+    badge.classList.remove("badgePulseUp", "badgePulseDown");
+    void badge.offsetWidth; // force reflow
+
+    if (count > prev) {
+        badge.classList.add("badgePulseUp");
+    } else {
+        badge.classList.add("badgePulseDown");
     }
 }
 
