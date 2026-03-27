@@ -6,6 +6,10 @@
 
 .cardCtnVer, .cardCtnHor {
     --CardHoverTransitionSpeed: 0.15s;
+    contain: layout style;
+}
+.cardCtnHor img, .cardCtnVer img {
+    will-change: margin;
 }
 
 .playerCtnHor {
@@ -275,4 +279,108 @@
 }
 .endTurnBtn:active {
     transform: translateY(0);
+}
+
+/*
+================================================================
+==========  RESPONSIVE CARD LAYOUT
+================================================================
+*/
+
+@media (max-width: 900px) {
+    .cardCtnHor {
+        max-width: 70vw;
+    }
+    .playerCtnHor p {
+        font-size: 14px;
+    }
+    .playerCtnVer p {
+        font-size: 14px;
+    }
+    .endTurnBtn {
+        font-size: 15px;
+        padding: 0.6rem 1.2rem;
+        margin-left: 0.5rem;
+    }
+    .cardCountBadge {
+        min-width: 22px;
+        height: 22px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 700px) {
+    .cardCtnHor {
+        max-width: 60vw;
+    }
+    .player0ExtraCtn {
+        max-width: 100%;
+    }
+    .playerCtnHor p {
+        font-size: 12px;
+    }
+    .playerCtnVer p {
+        font-size: 12px;
+    }
+    .endTurnBtn {
+        font-size: 13px;
+        padding: 0.5rem 1rem;
+        margin-left: 0.3rem;
+    }
+    .cardCountBadge {
+        min-width: 20px;
+        height: 20px;
+        font-size: 10px;
+        padding: 0 4px;
+    }
+}
+
+@media (max-width: 500px) {
+    .cardCtnHor {
+        max-width: 55vw;
+        scrollbar-width: none;
+    }
+    .cardCtnHor::-webkit-scrollbar {
+        display: none;
+    }
+    .playerCtnHor p {
+        font-size: 10px;
+    }
+    .playerCtnVer p {
+        font-size: 10px;
+    }
+    .endTurnBtn {
+        font-size: 11px;
+        padding: 0.4rem 0.8rem;
+    }
+    .cardCountBadge {
+        min-width: 18px;
+        height: 18px;
+        font-size: 9px;
+    }
+    /* Card hover is useless on mobile - remove extra margin shift */
+    .player0 .cardCtnHor img:hover {
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 380px) {
+    .cardCtnHor {
+        max-width: 50vw;
+    }
+    .endTurnBtn {
+        font-size: 10px;
+        padding: 0.3rem 0.6rem;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    /* Remove hover margin on touch devices */
+    .player0 .cardCtnHor img:hover {
+        margin-right: 0;
+    }
+    .endTurnBtn:hover {
+        transform: none;
+        box-shadow: 0 4px 15px rgba(0, 204, 94, 0.3);
+    }
 }

@@ -274,8 +274,21 @@ function UpdateHostButtons (strRoomCode)
     io.to(socketId).emit ("m_UpdateHostButtons", bShowButtons);
 }
 
+function ValidatePlayerName (strName) {
+    if (!strName || typeof strName !== "string") return false;
+    if (strName.length < 1 || strName.length > 20) return false;
+    // Allow letters, numbers, spaces, hyphens, underscores
+    return /^[\w\s\-\u00C0-\u024F]+$/.test(strName);
+}
+
 function CreateRoom (socket, strPlayerName, strGameMode) {
     Log (LogTrace, strPlayerName + " tried to create a room (" + strGameMode + "): " + socket.id);
+
+    if (!ValidatePlayerName(strPlayerName)) {
+        socket.emit ("m_CreateRoomFail", "Nom invalide (1-20 caracteres, lettres/chiffres uniquement)");
+        return;
+    }
+    strPlayerName = strPlayerName.trim().slice(0, 20);
 
     if (mapRoomCodeToPlayers.size >= nMaxRoomsAllowed)
     {
@@ -314,6 +327,18 @@ function CreateRoom (socket, strPlayerName, strGameMode) {
 }
 
 function JoinRoom (socket, strRoomCode, strPlayerName) {
+    if (!ValidatePlayerName(strPlayerName)) {
+        socket.emit ("m_JoinRoomFail", "Nom invalide (1-20 caracteres, lettres/chiffres uniquement)");
+        return;
+    }
+    strPlayerName = strPlayerName.trim().slice(0, 20);
+
+    if (!strRoomCode || typeof strRoomCode !== "string" || strRoomCode.length !== 4) {
+        socket.emit ("m_JoinRoomFail", "Code de room invalide");
+        return;
+    }
+    strRoomCode = strRoomCode.toLowerCase().trim();
+
     Log (LogTrace, "Client is trying to connect to room: " + strRoomCode);
     
     let mapValue = mapRoomCodeToPlayers.get (strRoomCode);

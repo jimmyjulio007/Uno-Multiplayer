@@ -14,3 +14,50 @@ html {
     --section-top-height: 18%;
     --section-bottom-height: 32%;
 }
+
+/* Tablet */
+@media (max-width: 900px) {
+    html {
+        --negCardMarginHor: -1.5rem;
+        --negCardMarginVer: -1.6rem;
+        --hor-max-height: 7rem;
+        --ver-max-width: 6rem;
+        --deck-max-width: 6rem;
+    }
+}
+
+/* Mobile landscape */
+@media (max-width: 700px) {
+    html {
+        --negCardMarginHor: -1.2rem;
+        --negCardMarginVer: -1.3rem;
+        --hor-max-height: 5.5rem;
+        --ver-max-width: 4rem;
+        --deck-max-width: 4.5rem;
+    }
+}
+
+/* Mobile portrait */
+@media (max-width: 500px) {
+    html {
+        --negCardMarginHor: -1rem;
+        --negCardMarginVer: -1rem;
+        --hor-max-height: 4.5rem;
+        --ver-max-width: 3rem;
+        --deck-max-width: 3.5rem;
+        --section-middle-height: 45%;
+        --section-top-height: 18%;
+        --section-bottom-height: 37%;
+    }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+    html {
+        --negCardMarginHor: -0.8rem;
+        --negCardMarginVer: -0.8rem;
+        --hor-max-height: 3.8rem;
+        --ver-max-width: 2.5rem;
+        --deck-max-width: 3rem;
+    }
+}

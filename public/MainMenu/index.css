@@ -756,3 +756,232 @@ main::before {
     letter-spacing: 1px;
     pointer-events: none;
 }
+
+/*
+================================================================
+==========  RESPONSIVE / MOBILE MEDIA QUERIES — MAIN MENU
+================================================================
+*/
+
+/* ---- Tablet (max 900px) ---- */
+@media (max-width: 900px) {
+    .main {
+        width: 92%;
+        height: 90%;
+        max-width: none;
+        max-height: none;
+    }
+
+    .main .title {
+        font-size: 80px;
+    }
+
+    .subtitle {
+        font-size: 22px;
+        letter-spacing: 8px;
+    }
+
+    .logoContainer {
+        --logoBlockSize: 50px;
+        height: 8rem;
+        width: 8rem;
+    }
+
+    .mainPageGroup {
+        gap: 28px;
+    }
+
+    .roomDialog {
+        min-width: 24rem;
+        min-height: 20rem;
+    }
+}
+
+/* ---- Mobile (max 600px) ---- */
+@media (max-width: 600px) {
+    body {
+        overflow: auto;
+    }
+
+    main {
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    .main {
+        width: 96%;
+        height: 95%;
+        max-width: none;
+        max-height: none;
+        border-radius: 16px;
+    }
+
+    .main .title {
+        font-size: 56px;
+        letter-spacing: 4px;
+    }
+
+    .subtitle {
+        font-size: 16px;
+        letter-spacing: 6px;
+        margin-top: -8px;
+    }
+
+    .logoContainer {
+        --logoBlockSize: 40px;
+        height: 6rem;
+        width: 6rem;
+        margin-top: 5px;
+    }
+
+    .mainPageGroup {
+        gap: 20px;
+    }
+
+    /* Buttons stack vertically on mobile */
+    .buttonContainer {
+        flex-direction: column;
+        gap: 14px;
+    }
+    .button {
+        padding: 14px 36px;
+        width: 220px;
+    }
+    .button p {
+        font-size: 16px;
+    }
+
+    /* Dialogs fill screen on mobile */
+    .roomDialog {
+        min-width: auto;
+        width: 92vw;
+        max-width: 400px;
+        min-height: auto;
+    }
+    .roomDialog .roomHeader p {
+        font-size: 18px;
+        padding: 0 0.8rem;
+    }
+
+    .playersRow {
+        flex-direction: column;
+    }
+
+    .roomDialogPlayer {
+        width: 90%;
+        margin: 0 0;
+        margin-bottom: 6px;
+        padding: 0.6rem 10%;
+    }
+
+    .roomDialogPlayer p {
+        font-size: 15px;
+    }
+
+    .roomStartGameButton {
+        padding: 10px 28px;
+    }
+    .roomStartGameButton p {
+        font-size: 17px;
+    }
+
+    .enterNameDlg {
+        min-width: auto;
+        width: 90vw;
+        max-width: 380px;
+    }
+
+    .enterName_errorMsg {
+        max-width: 80vw;
+        font-size: 14px;
+    }
+
+    .enterName_InputContainer {
+        padding: 0 1rem;
+    }
+
+    .enterName_enterBtn {
+        padding: 10px 28px;
+    }
+    .enterName_enterBtn p {
+        font-size: 16px;
+    }
+
+    .gameModeSelector {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .gameModeBtn {
+        font-size: 13px;
+        padding: 8px 10px;
+    }
+}
+
+/* ---- Small phones (max 400px) ---- */
+@media (max-width: 400px) {
+    .main {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+    }
+
+    .main .title {
+        font-size: 44px;
+        letter-spacing: 3px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+        letter-spacing: 4px;
+    }
+
+    .logoContainer {
+        --logoBlockSize: 32px;
+        height: 5rem;
+        width: 5rem;
+    }
+
+    .mainPageGroup {
+        gap: 16px;
+    }
+
+    .button {
+        padding: 12px 30px;
+        width: 200px;
+    }
+    .button p {
+        font-size: 14px;
+    }
+
+    .roomDialog {
+        width: 96vw;
+    }
+
+    .enterNameDlg {
+        width: 96vw;
+    }
+}
+
+/* ---- Touch optimizations for menu ---- */
+@media (hover: none) and (pointer: coarse) {
+    .button:hover {
+        transform: none;
+    }
+    .button:active {
+        transform: scale(0.97);
+    }
+    .roomStartGameButton:hover {
+        transform: none;
+    }
+    .enterName_enterBtn:hover {
+        transform: none;
+    }
+    .logoBlockCommon:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .button, .roomStartGameButton, .enterName_enterBtn,
+    .roomCloseButton, .enterName_CloseButton {
+        -webkit-tap-highlight-color: transparent;
+    }
+}

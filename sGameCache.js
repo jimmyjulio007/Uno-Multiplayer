@@ -71,15 +71,17 @@ function InsertWithCode (strId, strRoomCode, strPlayerName, bIsHost, nTimeout)
     }
 }
 
-//Default cache members... This is to make testing easier
-InsertWithCode ("rishia", "xyzw", "Rishi0", true,  -1);
-InsertWithCode ("rishib", "xyzw", "Rishi1", false, -1);
-InsertWithCode ("rishic", "xyzw", "Rishi2", false, -1);
-InsertWithCode ("rishid", "xyzw", "Rishi3", false, -1);
-InsertWithCode ("rishie", "xyzw", "Rishi4", false, -1);
-InsertWithCode ("rishif", "xyzw", "Rishi5", false, -1);
-InsertWithCode ("rishig", "xyzw", "Rishi6", false, -1);
-InsertWithCode ("rishih", "xyzw", "Rishi7", false, -1);
+// Test cache entries — only loaded in development
+if (process.env.NODE_ENV === "development") {
+    InsertWithCode ("rishia", "xyzw", "Rishi0", true,  -1);
+    InsertWithCode ("rishib", "xyzw", "Rishi1", false, -1);
+    InsertWithCode ("rishic", "xyzw", "Rishi2", false, -1);
+    InsertWithCode ("rishid", "xyzw", "Rishi3", false, -1);
+    InsertWithCode ("rishie", "xyzw", "Rishi4", false, -1);
+    InsertWithCode ("rishif", "xyzw", "Rishi5", false, -1);
+    InsertWithCode ("rishig", "xyzw", "Rishi6", false, -1);
+    InsertWithCode ("rishih", "xyzw", "Rishi7", false, -1);
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 const strLetters = "abcdefghijklmnopqrstuvwxyz";

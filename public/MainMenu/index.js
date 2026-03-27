@@ -8,15 +8,20 @@ if (window.location.pathname === "//")
     window.location = "/index.html";
 }
 
+let _keepAliveInterval = null;
 socket.on("connect", () => {
-        console.log("connected");
         bDisconnected = false;
-        
-        //Test... Keep the socket open ?
-        setInterval (() => {
-            if (!bDisconnected)
-                socket.emit ("_NonExistantMessage_");
-        }, 500);
+
+        // Keep the socket open - with proper cleanup
+        if (_keepAliveInterval) clearInterval(_keepAliveInterval);
+        _keepAliveInterval = setInterval (() => {
+            if (bDisconnected) {
+                clearInterval(_keepAliveInterval);
+                _keepAliveInterval = null;
+                return;
+            }
+            socket.emit ("_NonExistantMessage_");
+        }, 5000);
 });
 
 socket.on("disconnect", () => {
@@ -214,7 +219,7 @@ socket.on ("m_CreateRoomSucc", (roomCode) => {
 
 socket.on ("m_CreateRoomFail", (errorMsg) => {
     e_enterName_error.style.display = "flex";
-    e_enterName_error.innerHTML = "Error: " + errorMsg;
+    e_enterName_error.textContent = "Error: " + errorMsg;
 });
 
 //Player was able to join the room
@@ -240,7 +245,7 @@ socket.on ("m_JoinRoomSucc", (roomCode) => {
 });
 socket.on ("m_JoinRoomFail", (errorMsg) => {
     e_enterName_error.style.display = "flex";
-    e_enterName_error.innerHTML = errorMsg;
+    e_enterName_error.textContent = errorMsg;
     e_enterName_submitBtn.style.display = "flex";
 });
 

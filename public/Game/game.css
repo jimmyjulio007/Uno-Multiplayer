@@ -29,7 +29,8 @@ main {
 
 .main {
     background: rgba(40, 42, 60, 0.7);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 16px;
     height: 98%;
@@ -247,6 +248,8 @@ section.middle {
     animation-iteration-count: 1;
     animation-direction: normal;
     animation-timing-function: linear;
+    will-change: transform, filter;
+    transform: translateZ(0);
 
     /* animation: rotateCurrentCard var(--currentCardAnimationTime) linear 0s infinite normal; */
 }
@@ -476,6 +479,7 @@ section.middle {
     pointer-events: none;
     filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
     z-index: 100;
+    will-change: transform, opacity;
 }
 
 @keyframes emojiFloatUp {
@@ -963,4 +967,570 @@ section.middle {
     50% { border-color: #FF6B6B; }
 }
 
+/*
+================================================================
+==========  Connection Status & Reconnect Overlay
+================================================================
+*/
+
+.connectionStatus {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Montserrat', sans-serif;
+    transition: all 0.3s;
+    pointer-events: none;
+}
+
+.connectionDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00CC5E;
+    transition: background 0.3s;
+}
+
+.connectionStatus.disconnected {
+    background: rgba(239, 67, 67, 0.6);
+}
+.connectionStatus.disconnected .connectionDot {
+    background: #FF4444;
+    animation: disconnectBlink 1s ease-in-out infinite;
+}
+.connectionStatus.reconnecting .connectionDot {
+    background: #FFD700;
+    animation: disconnectBlink 0.5s ease-in-out infinite;
+}
+
+@keyframes disconnectBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.connectionText {
+    white-space: nowrap;
+}
+
+.reconnectOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9998;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.reconnectBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 30px 40px;
+    background: rgba(40, 42, 60, 0.95);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+.reconnectBox p {
+    color: #efefef;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.reconnectSpinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    border-top-color: #FFD700;
+    border-radius: 50%;
+    animation: spinReconnect 0.8s linear infinite;
+}
+
+@keyframes spinReconnect {
+    to { transform: rotate(360deg); }
+}
+
+/*
+================================================================
+==========  RESPONSIVE / MOBILE MEDIA QUERIES
+================================================================
+*/
+
+/* ---- Tablet (max 900px) ---- */
+@media (max-width: 900px) {
+    .main {
+        height: 99%;
+        width: 99%;
+        border-radius: 10px;
+    }
+
+    .middleMiddle h1 {
+        font-size: 50px;
+    }
+
+    .player0 h1 {
+        font-size: 16px;
+    }
+
+    .playerCtnHor p, .playerCtnVer p {
+        margin: 0.3rem 0.3rem;
+        font-size: 14px;
+    }
+
+    .playerCtnHor.down p, .playerCtnHor.up p {
+        font-size: 13px;
+    }
+
+    .middleLeft, .middleRight {
+        padding: 0 0.3rem;
+        max-width: 22%;
+    }
+
+    .middleMiddle img {
+        margin: 0 0.4rem;
+    }
+
+    .wildChooseColor {
+        height: 10rem;
+        width: 10rem;
+    }
+    * {
+        --chooseColBlockSize: 48px;
+    }
+    .wildColorChoosen {
+        height: 55px;
+        width: 55px;
+        margin: 0.5rem;
+    }
+
+    .unoCallBtn {
+        width: 70px;
+        height: 70px;
+        font-size: 18px;
+        padding: 8px 16px;
+    }
+
+    .challengeBtn, .acceptDrawBtn {
+        font-size: 13px;
+        padding: 8px 16px;
+    }
+
+    .swapDlg {
+        min-width: 250px;
+        padding: 15px;
+    }
+
+    .chatPanel {
+        width: 260px;
+        height: 320px;
+    }
+
+    .rulesPanel {
+        width: 300px;
+    }
+
+    .turnTimer {
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+
+    .emojiFloat {
+        font-size: 48px;
+    }
+}
+
+/* ---- Mobile (max 700px) ---- */
+@media (max-width: 700px) {
+    .main {
+        height: 100%;
+        width: 100%;
+        border-radius: 0;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    main {
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    .middleMiddle h1 {
+        font-size: 36px;
+        margin: 0 0.2rem;
+    }
+
+    .player0 h1 {
+        font-size: 14px;
+    }
+
+    .playerCtnHor p, .playerCtnVer p {
+        margin: 0.2rem 0.2rem;
+        font-size: 12px;
+    }
+
+    .playerCtnHor.down p, .playerCtnHor.up p {
+        font-size: 11px;
+        padding: 1px 4px;
+    }
+
+    section.up {
+        padding-left: 2%;
+        padding-right: 2%;
+        padding-top: 0.3rem;
+    }
+
+    section.down {
+        padding-left: 1%;
+        padding-right: 1%;
+        padding-bottom: 0.3rem;
+    }
+
+    .middleLeft, .middleRight {
+        padding: 0 0.2rem;
+        max-width: 18%;
+    }
+
+    .middleMiddle {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    .middleMiddle img {
+        margin: 0 0.2rem;
+    }
+
+    .wildChooseColor {
+        height: 8rem;
+        width: 8rem;
+    }
+    * {
+        --chooseColBlockSize: 38px;
+    }
+    .wildColorChoosen {
+        height: 40px;
+        width: 40px;
+        margin: 0.3rem;
+    }
+
+    .colorPickerLabel {
+        font-size: 11px;
+        top: -20px;
+    }
+
+    /* UNO button - smaller on mobile */
+    .unoCallBtn {
+        width: 56px;
+        height: 56px;
+        font-size: 14px;
+        padding: 6px 10px;
+        bottom: 12%;
+        right: 3%;
+    }
+
+    .challengeBtn, .acceptDrawBtn {
+        font-size: 11px;
+        padding: 6px 12px;
+        margin: 3px;
+    }
+
+    .swapDlg {
+        min-width: 80vw;
+        max-width: 90vw;
+        padding: 12px;
+    }
+    .swapDlg_header p {
+        font-size: 14px;
+    }
+    .swapDlg_playerBtn {
+        font-size: 13px;
+        padding: 8px 14px;
+    }
+
+    /* Leave button */
+    .leaveRoomBtn {
+        left: 52px;
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    /* Rules */
+    .rulesBox {
+        top: 6px;
+        left: 6px;
+    }
+    .rulesToggleBtn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    .rulesPanel {
+        width: calc(100vw - 20px);
+        max-width: 340px;
+        max-height: 60vh;
+    }
+
+    /* Chat */
+    .chatBox {
+        top: 6px;
+        right: 6px;
+    }
+    .chatToggleBtn {
+        width: 40px;
+        height: 40px;
+    }
+    .chatIcon {
+        font-size: 18px;
+    }
+    .chatPanel {
+        width: calc(100vw - 20px);
+        max-width: 300px;
+        height: 300px;
+        max-height: 55vh;
+    }
+    .chatHeader {
+        padding: 8px 12px;
+    }
+    .chatMsg {
+        font-size: 13px;
+    }
+    .chatInput {
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+
+    /* Emoji bar */
+    .emojiBar {
+        bottom: 10px;
+        left: 10px;
+    }
+    .emojiToggleBtn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    .emojiBtn {
+        width: 38px;
+        height: 38px;
+        font-size: 22px;
+    }
+
+    .emojiFloat {
+        font-size: 40px;
+    }
+    .emojiFloat .emojiSender {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .turnTimer {
+        width: 38px;
+        height: 38px;
+        font-size: 14px;
+        bottom: 30%;
+        border-width: 2px;
+    }
+
+    .forceCardCount {
+        font-size: 60px !important;
+    }
+}
+
+/* ---- Small phones (max 500px) ---- */
+@media (max-width: 500px) {
+    .middleMiddle h1 {
+        font-size: 28px;
+    }
+
+    .player0 h1 {
+        font-size: 12px;
+    }
+
+    .playerCtnHor p, .playerCtnVer p {
+        font-size: 10px;
+        margin: 0.1rem 0.1rem;
+    }
+
+    .playerCtnHor.down p, .playerCtnHor.up p {
+        font-size: 10px;
+    }
+
+    .middleLeft, .middleRight {
+        max-width: 15%;
+        padding: 0 0.1rem;
+    }
+
+    .middleMiddle img {
+        margin: 0 0.1rem;
+    }
+
+    .wildChooseColor {
+        height: 7rem;
+        width: 7rem;
+    }
+    * {
+        --chooseColBlockSize: 32px;
+    }
+    .wildColorChoosen {
+        height: 30px;
+        width: 30px;
+        margin: 0.2rem;
+    }
+
+    .unoCallBtn {
+        width: 48px;
+        height: 48px;
+        font-size: 12px;
+        padding: 4px 8px;
+        bottom: 10%;
+        right: 2%;
+    }
+
+    .challengeBtn, .acceptDrawBtn {
+        font-size: 10px;
+        padding: 5px 10px;
+    }
+
+    .chatPanel {
+        height: 250px;
+        max-height: 50vh;
+    }
+
+    .leaveRoomBtn {
+        left: 46px;
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    .rulesToggleBtn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+
+    .turnTimer {
+        width: 34px;
+        height: 34px;
+        font-size: 13px;
+    }
+
+    .emojiFloat {
+        font-size: 32px;
+    }
+}
+
+/* ---- Very small phones (max 380px) ---- */
+@media (max-width: 380px) {
+    .middleMiddle h1 {
+        font-size: 22px;
+    }
+
+    .playerCtnHor p, .playerCtnVer p {
+        font-size: 9px;
+    }
+
+    .unoCallBtn {
+        width: 42px;
+        height: 42px;
+        font-size: 10px;
+    }
+
+    .leaveRoomBtn {
+        left: 40px;
+        width: 28px;
+        height: 28px;
+        font-size: 10px;
+    }
+
+    .rulesToggleBtn, .chatToggleBtn, .emojiToggleBtn {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+    .chatIcon {
+        font-size: 14px;
+    }
+}
+
+/* ---- Landscape mobile (short viewport) ---- */
+@media (max-height: 500px) {
+    .wildChooseColor {
+        height: 6rem;
+        width: 6rem;
+    }
+    * {
+        --chooseColBlockSize: 28px;
+    }
+    .middleMiddle h1 {
+        font-size: 24px;
+    }
+    .player0 h1 {
+        font-size: 11px;
+    }
+    .chatPanel {
+        max-height: 45vh;
+        height: 220px;
+    }
+    .rulesPanel {
+        max-height: 50vh;
+    }
+}
+
+/* ---- Touch device optimizations ---- */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    .wildChooseColor .block {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    .endTurnBtn {
+        min-height: 44px;
+        padding: 0.6rem 1.4rem;
+    }
+    .swapDlg_playerBtn {
+        min-height: 44px;
+    }
+    .allowDlg_Btn {
+        min-height: 44px;
+    }
+    /* Disable hover effects on touch */
+    .unoCallBtn:hover,
+    .challengeBtn:hover,
+    .acceptDrawBtn:hover,
+    .emojiBtn:hover,
+    .rulesToggleBtn:hover,
+    .chatToggleBtn:hover,
+    .leaveRoomBtn:hover {
+        transform: none;
+    }
+    /* Active state for touch feedback */
+    .unoCallBtn:active {
+        transform: scale(0.92);
+    }
+
+    /* Prevent text selection on game elements */
+    .unoCallBtn, .endTurnBtn, .challengeBtn, .acceptDrawBtn,
+    .emojiBtn, .emojiToggleBtn, .chatToggleBtn, .rulesToggleBtn,
+    .leaveRoomBtn, .wildChooseColor .block {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+    }
+}
 

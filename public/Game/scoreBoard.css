@@ -173,3 +173,45 @@
     box-shadow: 0 6px 30px rgba(0, 204, 94, 0.5);
     transform: translateY(-2px);
 }
+
+@media (max-width: 700px) {
+    .scoreDlg {
+        min-width: auto;
+        width: 90vw;
+        max-width: 400px;
+        min-height: auto;
+    }
+    .scoreDlg .scoreDlg_Header p {
+        font-size: 18px;
+        padding: 0 0.8rem;
+    }
+    .scoreDlg_row {
+        flex-direction: column;
+    }
+    .scoreDlg_player {
+        width: 90%;
+        margin: 0 0;
+        margin-bottom: 6px;
+    }
+    .scoreDlg_playersCtn .scoreDlg_player p {
+        font-size: 15px;
+    }
+    .score_nextBtn {
+        padding: 10px 24px;
+    }
+    .score_nextBtn p {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 400px) {
+    .scoreDlg {
+        width: 96vw;
+    }
+    .scoreDlg_playersCtn .scoreDlg_player p {
+        font-size: 13px;
+    }
+    .score_nextBtn p {
+        font-size: 14px;
+    }
+}

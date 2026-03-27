@@ -59,42 +59,31 @@ function UC_AddCard(playerCtn, strCard) {
 //Internal function called within this js file... Takes in a card object that was just added by UC_AddCard
 function UCi_CardAddMetaData (eCard, strCard, bAddClickListenerToSelf) {
     const nIndexDash = strCard.indexOf("-");
-    if (nIndexDash == -1)   { console.log("Invalid str: " + strCard); return; }
-    
+    if (nIndexDash == -1)   { return; }
+
     const strColor = strCard.slice(0, nIndexDash);
     const strType = strCard.slice(nIndexDash+1, strCard.length);
 
-    if (!strColor || !strType) { console.log("Invalid str: " + strCard); return; }
+    if (!strColor || !strType) { return; }
 
     eCard.setAttribute("cardColor", strColor);
     eCard.setAttribute("cardType", strType);
-
-    if (bAddClickListenerToSelf === true)
-    {
-        //Check if player clicked on their own card
-        let ePlayerCtn = eCard;
-        let bIsSelfCard = false;
-        for (let i = 0; i < 3; i++)
-        {
-            if (ePlayerCtn.parentNode)
-            {
-                ePlayerCtn = ePlayerCtn.parentNode; 
-                if (ePlayerCtn === uc_playerSelf)
-                {
-                    bIsSelfCard = true;
-                }
-            }
-        }
-        // const ePlayerCtn = eCard.parentNode.parentNode.parentNode;    
-        if (bIsSelfCard)
-        {
-            eCard.addEventListener ("click", () => {
-                UG_CardOnClick(eCard);
-            });
-        }
-    }
-    
+    // No per-card click listener needed — event delegation handles it (see below)
 }
+
+// Event delegation: single listener on player0's card container handles all card clicks
+// This avoids creating/destroying listeners when cards are added/removed
+(function() {
+    const selfCardCtn = uc_playerSelf ? uc_playerSelf.querySelector(".cardCtnHor") : null;
+    if (selfCardCtn) {
+        selfCardCtn.addEventListener("click", (e) => {
+            const eCard = e.target.closest("img[cardColor]");
+            if (eCard && selfCardCtn.contains(eCard)) {
+                UG_CardOnClick(eCard);
+            }
+        });
+    }
+})();
 
 
 // public
@@ -192,15 +181,52 @@ function UC_SetPlayerDetails (player, playerDetails, nRoundsToWin)
 }
 function UC_SetPlayerCards (player, cards)
 {
-    if (!player || !cards) { console.log ("Something went wrong"); return; }
-    UCi_RemoveAllCards (player);
+    if (!player || !cards) { return; }
 
-    for (let i = 0; i < cards.length; i++)
-    {
-        UC_AddCard (player, cards[i]);
+    const horCtn = player.querySelector(".cardCtnHor");
+    const verCtn = player.querySelector(".cardCtnVer");
+    const cardCtn = horCtn || verCtn;
+
+    if (!cardCtn) {
+        // Fallback to full rebuild
+        UCi_RemoveAllCards(player);
+        for (let i = 0; i < cards.length; i++) UC_AddCard(player, cards[i]);
+        UCi_UpdateCardCount(player, cards.length);
+        return;
     }
 
-    // Update card count badge
+    const existing = cardCtn.children;
+    const prefix = horCtn ? "bottom-" : "right-";
+
+    // Diff: only add/remove what changed
+    // If counts differ significantly or cards changed, do a smart rebuild
+    if (Math.abs(existing.length - cards.length) > cards.length / 2 || existing.length === 0) {
+        // Full rebuild is faster when most cards changed
+        UCi_RemoveAllCards(player);
+        for (let i = 0; i < cards.length; i++) UC_AddCard(player, cards[i]);
+    } else {
+        // Build a map of existing card srcs for fast lookup
+        const targetSrc = cards.map(c => uc_strImagesDir + prefix + c + uc_strImageExtension);
+
+        // Remove excess cards from the end
+        while (cardCtn.children.length > cards.length) {
+            cardCtn.removeChild(cardCtn.lastElementChild);
+        }
+
+        // Update existing cards and add missing ones
+        for (let i = 0; i < cards.length; i++) {
+            if (i < cardCtn.children.length) {
+                const el = cardCtn.children[i];
+                if (el.src !== targetSrc[i] && !el.src.endsWith(prefix + cards[i] + uc_strImageExtension)) {
+                    el.src = targetSrc[i];
+                    UCi_CardAddMetaData(el, cards[i], false);
+                }
+            } else {
+                UC_AddCard(player, cards[i]);
+            }
+        }
+    }
+
     UCi_UpdateCardCount(player, cards.length);
 }
 
@@ -225,13 +251,13 @@ function UCi_UpdateCardCount(player, count) {
 
     // Animate: red pulse when cards increase, green flash when decrease
     badge.classList.remove("badgePulseUp", "badgePulseDown");
-    void badge.offsetWidth; // force reflow
-
+    requestAnimationFrame(() => {
     if (count > prev) {
         badge.classList.add("badgePulseUp");
     } else {
         badge.classList.add("badgePulseDown");
     }
+    }); // end requestAnimationFrame
 }
 
 function UCi_RemoveAllCards (playerCtn)

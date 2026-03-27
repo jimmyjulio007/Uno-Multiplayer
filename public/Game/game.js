@@ -18,6 +18,22 @@ ug_sfx.kasongo.volume = 0.8;
 ug_sfx.atassa.preload = "auto";
 ug_sfx.atassa.volume = 0.8;
 
+// Mobile audio unlock: browsers block audio until first user interaction
+let ug_bAudioUnlocked = false;
+function UGi_UnlockAudio() {
+    if (ug_bAudioUnlocked) return;
+    ug_bAudioUnlocked = true;
+    // Create and play a silent buffer to unlock audio context
+    for (const key in ug_sfx) {
+        const snd = ug_sfx[key];
+        snd.play().then(() => { snd.pause(); snd.currentTime = 0; }).catch(() => {});
+    }
+    document.removeEventListener("touchstart", UGi_UnlockAudio);
+    document.removeEventListener("click", UGi_UnlockAudio);
+}
+document.addEventListener("touchstart", UGi_UnlockAudio, { once: true });
+document.addEventListener("click", UGi_UnlockAudio, { once: true });
+
 /** Play "FAHHH" for 2 sec — on +10 */
 function UGi_PlayFahSound() {
     const snd = ug_sfx.fah;
@@ -46,45 +62,93 @@ function UGi_PlayAtassaSound() {
 //////////////////////////////////////////////////////////////////////////////////////////
 
 function UGi_LaunchConfetti() {
-    const container = document.body;
+    const canvas = document.createElement("canvas");
+    canvas.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none;";
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
     const colors = ["#EF4343", "#0066FF", "#00CC5E", "#FFF50F", "#FF8C00", "#FF69B4", "#FFD700"];
-    const totalPieces = 150;
+    const totalPieces = 100;
+    const pieces = [];
 
     for (let i = 0; i < totalPieces; i++) {
-        const piece = document.createElement("div");
-        piece.className = "confettiPiece";
-
-        // Random properties
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const left = Math.random() * 100;
-        const delay = Math.random() * 2;
-        const duration = 2.5 + Math.random() * 2;
-        const size = 6 + Math.random() * 8;
-        const shape = Math.random() > 0.5 ? "50%" : "2px";
-        const rotateEnd = Math.floor(Math.random() * 720 - 360);
-        const driftX = Math.floor(Math.random() * 200 - 100);
-
-        piece.style.cssText =
-            "position:fixed;z-index:9999;pointer-events:none;" +
-            "width:" + size + "px;height:" + (size * 0.6) + "px;" +
-            "background:" + color + ";" +
-            "border-radius:" + shape + ";" +
-            "left:" + left + "%;top:-10px;" +
-            "animation:confettiFall " + duration + "s ease-in " + delay + "s forwards;" +
-            "--confetti-drift:" + driftX + "px;" +
-            "--confetti-rotate:" + rotateEnd + "deg;";
-
-        container.appendChild(piece);
-
-        // Clean up
-        setTimeout(() => {
-            if (piece.parentNode) piece.parentNode.removeChild(piece);
-        }, (duration + delay) * 1000 + 500);
+        pieces.push({
+            x: Math.random() * canvas.width,
+            y: -10 - Math.random() * canvas.height * 0.5,
+            w: 6 + Math.random() * 8,
+            h: (6 + Math.random() * 8) * 0.6,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            vy: 2 + Math.random() * 3,
+            vx: Math.random() * 2 - 1,
+            rot: Math.random() * 360,
+            rotSpeed: Math.random() * 6 - 3,
+            delay: Math.random() * 60 // frames
+        });
     }
+
+    let frame = 0;
+    let animId;
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let active = false;
+        for (const p of pieces) {
+            if (frame < p.delay) { active = true; continue; }
+            p.y += p.vy;
+            p.x += p.vx;
+            p.rot += p.rotSpeed;
+            if (p.y > canvas.height + 20) continue;
+            active = true;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot * Math.PI / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+        }
+        frame++;
+        if (active) {
+            animId = requestAnimationFrame(draw);
+        } else {
+            canvas.parentNode.removeChild(canvas);
+        }
+    }
+    animId = requestAnimationFrame(draw);
+
+    // Safety cleanup after 6 seconds
+    setTimeout(() => {
+        cancelAnimationFrame(animId);
+        if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+    }, 6000);
 }
 
-// Once you disconnect you shouldnt reconnect again
+// Connection state
 let ug_bPlayerDisconnected = false;
+let ug_nReconnectAttempts = 0;
+const ug_nMaxReconnectAttempts = 5;
+
+// Connection status UI
+function UGi_UpdateConnectionUI(status) {
+    const el = document.getElementById("connectionStatus");
+    const overlay = document.getElementById("reconnectOverlay");
+    if (!el) return;
+
+    el.classList.remove("disconnected", "reconnecting");
+    if (status === "connected") {
+        el.classList.remove("disconnected", "reconnecting");
+        el.querySelector(".connectionText").textContent = "Connecte";
+        if (overlay) overlay.style.display = "none";
+    } else if (status === "disconnected") {
+        el.classList.add("disconnected");
+        el.querySelector(".connectionText").textContent = "Deconnecte";
+        if (overlay) overlay.style.display = "flex";
+    } else if (status === "reconnecting") {
+        el.classList.add("reconnecting");
+        el.querySelector(".connectionText").textContent = "Reconnexion...";
+        if (overlay) overlay.style.display = "flex";
+    }
+}
 
 let ug_strCurrentCardColor;
 let ug_strCurrentCardType;
@@ -111,6 +175,23 @@ let ug_bConnected = false;
 const nRoundsToWin = 4;
 const nMaxPlayers = 8;
 
+// Cached DOM references — avoid repeated querySelector calls
+const ug_elYourTurnText = document.querySelector(".player0 h1");
+const ug_elChallengeBtn = document.querySelector(".challengeBtn");
+const ug_elAcceptDrawBtn = document.querySelector(".acceptDrawBtn");
+const ug_elEndTurnBtn = document.querySelector(".endTurnBtn");
+const ug_elForceCardCount = document.querySelector(".forceCardCount");
+const ug_elWildChooseColor = document.querySelector(".wildChooseColor");
+const ug_elWildColorChosen = document.querySelector(".wildColorChoosen");
+const ug_elErrorDlg = document.querySelector(".errorDlg");
+const ug_elScoreDlg = document.querySelector(".scoreDlg");
+const ug_elTurnTimer = document.querySelector(".turnTimer");
+const ug_elChatPanel = document.querySelector(".chatPanel");
+const ug_elChatBadge = document.querySelector(".chatBadge");
+const ug_elChatInput = document.querySelector(".chatInput");
+const ug_elChatMessages = document.querySelector(".chatMessages");
+const ug_elEmojiList = document.querySelector(".emojiList");
+
 
 //Sometimes after redirecting, the socket does not connect for some reason... This is a hack... When that happens, forcefully refresh the page so that it connects
 setTimeout(() => {
@@ -121,39 +202,58 @@ setTimeout(() => {
 }, 1500);
 socket.on("connect", () => {
     ug_bConnected = true;
-    
+    ug_nReconnectAttempts = 0;
+    UGi_UpdateConnectionUI("connected");
+
     if (!ug_bPlayerDisconnected)
     {
-        console.log("connected");
         ug_bInitJoinRoom = false;
 
         const strCode = GetUrlValue("id");
         const strMode = GetUrlValue("mode") || "nomercy";
         socket.emit("g_InitJoinRoom", strCode, strMode);
-        
+
         setTimeout (UGi_InitJoinRoomFailed, ug_nGenericTimeout, "Server did not respond in time");
 
-        //Test... Keep the socket open ?
-        setInterval (() => {
-            if (!ug_bPlayerDisconnected)
-                socket.emit ("_NonExistantMessage_");
-        }, 500);
+        // Keep the socket open - with proper cleanup (5s is enough)
+        if (window._keepAliveInterval) clearInterval(window._keepAliveInterval);
+        window._keepAliveInterval = setInterval (() => {
+            if (ug_bPlayerDisconnected) {
+                clearInterval(window._keepAliveInterval);
+                window._keepAliveInterval = null;
+                return;
+            }
+            socket.emit ("_NonExistantMessage_");
+        }, 5000);
     }
 });
 
 socket.on("disconnect", () => {
-    UGi_DisplayError ("You disconnected from the room");
-    console.log ("Disconnected");
+    UGi_UpdateConnectionUI("disconnected");
+
+    // Try to auto-reconnect a few times before giving up
+    if (ug_nReconnectAttempts < ug_nMaxReconnectAttempts) {
+        ug_nReconnectAttempts++;
+        UGi_UpdateConnectionUI("reconnecting");
+        // socket.io auto-reconnects by default, we just show UI
+    } else {
+        ug_bPlayerDisconnected = true;
+        UGi_DisplayError("Connexion perdue. Veuillez rafraichir la page.");
+    }
+});
+
+socket.on("reconnect_failed", () => {
     ug_bPlayerDisconnected = true;
+    UGi_UpdateConnectionUI("disconnected");
+    UGi_DisplayError("Impossible de se reconnecter. Veuillez rafraichir la page.");
 });
 
 socket.on ("g_InitJoinRoomSuccess", () => {
     ug_bInitJoinRoom = true;
 
     //Show the scoreBoard
-    const scoreBoardDlg = document.querySelector (".scoreDlg");
-    if (!scoreBoardDlg) { console.log ("Error..."); return; }
-    scoreBoardDlg.style.display = "flex";
+    if (!ug_elScoreDlg) { return; }
+    ug_elScoreDlg.style.display = "flex";
 });
 
 socket.on ("g_InitJoinRoomFailure", (strMessage) => {
@@ -239,10 +339,10 @@ socket.on ("g_SetScoreBoardVisibility", (bShow) => {
 });
 
 socket.on ("g_UpdateScoreBoard_ShowBtn", (strPlayerWonName) => {
-    const scoreBoardNextRoundBtn = document.querySelector (".score_nextBtn");
-    if (!scoreBoardNextRoundBtn) { console.log ("Error..."); return; }
-    
-    scoreBoardNextRoundBtn.style.display = "flex"; 
+    const scoreBoardNextRoundBtn = ug_elScoreDlg ? ug_elScoreDlg.querySelector(".score_nextBtn") : null;
+    if (!scoreBoardNextRoundBtn) { return; }
+
+    scoreBoardNextRoundBtn.style.display = "flex";
     ug_strPlayerHasWon = strPlayerWonName;
     if (strPlayerWonName == "")
     {
@@ -257,9 +357,9 @@ socket.on ("g_UpdateScoreBoard_ShowBtn", (strPlayerWonName) => {
 });
 
 socket.on ("g_UpdateScoreBoard_HideBtn", () => {
-    const scoreBoardNextRoundBtn = document.querySelector (".score_nextBtn");
-    if (!scoreBoardNextRoundBtn) { console.log ("Error..."); return; }
-    
+    const scoreBoardNextRoundBtn = ug_elScoreDlg ? ug_elScoreDlg.querySelector(".score_nextBtn") : null;
+    if (!scoreBoardNextRoundBtn) { return; }
+
     scoreBoardNextRoundBtn.style.display = "none";
 });
 
@@ -290,16 +390,12 @@ function UGi_ResetForNewRound() {
     UGi_WildShowColorPicker(false);
     UGi_WildShowColorChosen("");
     UGi_StopTurnTimer();
-    const challengeBtn = document.querySelector(".challengeBtn");
-    if (challengeBtn) challengeBtn.style.display = "none";
-    const acceptBtn = document.querySelector(".acceptDrawBtn");
-    if (acceptBtn) acceptBtn.style.display = "none";
-    const forceCount = document.querySelector(".forceCardCount");
-    if (forceCount) forceCount.style.display = "none";
+    if (ug_elChallengeBtn) ug_elChallengeBtn.style.display = "none";
+    if (ug_elAcceptDrawBtn) ug_elAcceptDrawBtn.style.display = "none";
+    if (ug_elForceCardCount) ug_elForceCardCount.style.display = "none";
     const swapDlg = document.querySelector(".swapDlg");
     if (swapDlg) swapDlg.style.display = "none";
-    const yourTurn = document.querySelector(".player0 h1");
-    if (yourTurn) yourTurn.style.display = "none";
+    if (ug_elYourTurnText) ug_elYourTurnText.style.display = "none";
 
     // Reset eliminated player visuals (restore opacity/filter)
     for (let i = 0; i < nMaxPlayers; i++) {
@@ -324,10 +420,8 @@ function UGi_ResetForNewRound() {
 
 function UGi_SetScoreBoardVisibility (bShow)
 {
-    const scoreBoardDlg = document.querySelector (".scoreDlg");
-    if (!scoreBoardDlg) { console.log ("Error..."); return; }
-    console.log ("SetVisibility ScoreBoard: " + bShow);
-    scoreBoardDlg.style.display = (bShow ? "flex" : "none");
+    if (!ug_elScoreDlg) { return; }
+    ug_elScoreDlg.style.display = (bShow ? "flex" : "none");
 }
 function UGi_GetPlayerFromName (strPlayerName)
 {
@@ -376,15 +470,14 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
 
     //Set the pick up card count
     {
-        const ele = document.querySelector(".forceCardCount");
         if (ug_currCardMeta.nForceDraw == 0)
         {
-            ele.style.display = "none";
+            ug_elForceCardCount.style.display = "none";
         }
         else
         {
-            ele.style.display = "flex";
-            ele.textContent = "+" + ug_currCardMeta.nForceDrawValue.toString();
+            ug_elForceCardCount.style.display = "flex";
+            ug_elForceCardCount.textContent = "+" + ug_currCardMeta.nForceDrawValue.toString();
 
             // Sound effects based on penalty severity
             if (ug_currCardMeta.nForceDrawValue >= 6)
@@ -398,7 +491,7 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
         }
     }
 
-    const yourTurnTextEle = document.querySelector (".player0 h1");
+    const yourTurnTextEle = ug_elYourTurnText;
     // No Mercy: Hide UNO button and challenge buttons at start of each turn
     {
         // UNO button stays visible — just reset flag
@@ -431,13 +524,13 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
         // No Mercy: If a +4 was played against us, show challenge/accept buttons
         if (metaData && metaData.bCanChallenge)
         {
-            document.querySelector(".challengeBtn").style.display = "flex";
-            document.querySelector(".acceptDrawBtn").style.display = "flex";
+            ug_elChallengeBtn.style.display = "flex";
+            ug_elAcceptDrawBtn.style.display = "flex";
         }
         else
         {
-            document.querySelector(".challengeBtn").style.display = "none";
-            document.querySelector(".acceptDrawBtn").style.display = "none";
+            ug_elChallengeBtn.style.display = "none";
+            ug_elAcceptDrawBtn.style.display = "none";
         }
     }
     else
@@ -445,8 +538,8 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
         //Its not your turn
         ug_bIsYourTurn = false;
         yourTurnTextEle.style.display = "none";
-        document.querySelector(".challengeBtn").style.display = "none";
-        document.querySelector(".acceptDrawBtn").style.display = "none";
+        ug_elChallengeBtn.style.display = "none";
+        ug_elAcceptDrawBtn.style.display = "none";
         UGi_StopTurnTimer();
     }
     
@@ -725,12 +818,11 @@ document.querySelectorAll (".wildChooseColor .block").forEach ((block) => {
 
 //Wild/Draw4 Color Picker
 function UGi_WildShowColorPicker (bShow) {
-    const ele = document.querySelector (".wildChooseColor");
-    if (!ele) { console.log ("Error..."); return; }
-    ele.style.display = (bShow === true ? "flex" : "none");
+    if (!ug_elWildChooseColor) { return; }
+    ug_elWildChooseColor.style.display = (bShow === true ? "flex" : "none");
 
     // Update label based on context
-    const label = ele.querySelector(".colorPickerLabel");
+    const label = ug_elWildChooseColor.querySelector(".colorPickerLabel");
     if (label) {
         if (typeof ug_bRouletteActive !== "undefined" && ug_bRouletteActive) {
             label.textContent = "Roulette — Pick a color";
@@ -743,8 +835,8 @@ function UGi_WildShowColorPicker (bShow) {
 //Wild/Draw4 show color chosen
 function UGi_WildShowColorChosen (strCol)
 {
-    const ele = document.querySelector (".wildColorChoosen");
-    if (!ele) { console.log ("Error..."); return; }
+    const ele = ug_elWildColorChosen;
+    if (!ele) { return; }
 
     if (strCol === "")
     {
@@ -783,8 +875,8 @@ function UGi_WildShowColorChosen (strCol)
 //If strMessage is "" then the dialog is hidden
 function UGi_DisplayError (strMessage)
 {
-    const errorDlg = document.querySelector (".errorDlg");
-    if (!errorDlg) { console.log ("Error..."); return; }
+    const errorDlg = ug_elErrorDlg;
+    if (!errorDlg) { return; }
 
     if (strMessage == "")
     {
@@ -823,8 +915,8 @@ document.querySelector(".endTurnBtn").addEventListener ("click", () => {
 });
 
 function UG_ShowEndTurnButton (bShow) {
-    const ele = document.querySelector(".endTurnBtn");
-    if (!ele) { console.log ("Error.."); return; }
+    const ele = ug_elEndTurnBtn;
+    if (!ele) { return; }
     
     if (bShow === true)
     {
@@ -1108,16 +1200,16 @@ document.addEventListener("keydown", (e) => {
 ///////////          No Mercy: Challenge +4 System
 //////////////////////////////////////////////////////////////////////////////////////////
 
-document.querySelector(".challengeBtn").addEventListener("click", () => {
+ug_elChallengeBtn.addEventListener("click", () => {
     socket.emit("g_ChallengeDrawFour");
-    document.querySelector(".challengeBtn").style.display = "none";
-    document.querySelector(".acceptDrawBtn").style.display = "none";
+    ug_elChallengeBtn.style.display = "none";
+    ug_elAcceptDrawBtn.style.display = "none";
 });
 
-document.querySelector(".acceptDrawBtn").addEventListener("click", () => {
+ug_elAcceptDrawBtn.addEventListener("click", () => {
     socket.emit("g_AcceptDraw");
-    document.querySelector(".challengeBtn").style.display = "none";
-    document.querySelector(".acceptDrawBtn").style.display = "none";
+    ug_elChallengeBtn.style.display = "none";
+    ug_elAcceptDrawBtn.style.display = "none";
 });
 
 socket.on("g_ChallengeResult", (strChallengerName, strAccusedName, bBluffDetected) => {
@@ -1289,15 +1381,14 @@ function UGi_StartTurnTimer() {
     UGi_StopTurnTimer();
     ug_turnTimerSeconds = 30;
 
-    const timerEl = document.querySelector(".turnTimer");
-    if (timerEl) {
-        timerEl.style.display = "flex";
-        timerEl.textContent = ug_turnTimerSeconds;
+    if (ug_elTurnTimer) {
+        ug_elTurnTimer.style.display = "flex";
+        ug_elTurnTimer.textContent = ug_turnTimerSeconds;
     }
 
     ug_turnTimer = setInterval(() => {
         ug_turnTimerSeconds--;
-        if (timerEl) timerEl.textContent = ug_turnTimerSeconds;
+        if (ug_elTurnTimer) ug_elTurnTimer.textContent = ug_turnTimerSeconds;
 
         if (ug_turnTimerSeconds <= 0) {
             UGi_StopTurnTimer();
@@ -1327,8 +1418,7 @@ function UGi_StopTurnTimer() {
         clearInterval(ug_turnTimer);
         ug_turnTimer = null;
     }
-    const timerEl = document.querySelector(".turnTimer");
-    if (timerEl) timerEl.style.display = "none";
+    if (ug_elTurnTimer) ug_elTurnTimer.style.display = "none";
 }
 
 
@@ -1369,11 +1459,10 @@ let ug_bEmojiCooldown = false;
 
 // Toggle emoji picker
 document.querySelector(".emojiToggleBtn").addEventListener("click", () => {
-    const list = document.querySelector(".emojiList");
-    if (list.style.display === "none" || list.style.display === "") {
-        list.style.display = "flex";
+    if (ug_elEmojiList.style.display === "none" || ug_elEmojiList.style.display === "") {
+        ug_elEmojiList.style.display = "flex";
     } else {
-        list.style.display = "none";
+        ug_elEmojiList.style.display = "none";
     }
 });
 
@@ -1394,7 +1483,7 @@ document.querySelectorAll(".emojiBtn").forEach(btn => {
         }, 2000);
 
         // Hide picker after sending
-        document.querySelector(".emojiList").style.display = "none";
+        ug_elEmojiList.style.display = "none";
     });
 });
 
@@ -1503,39 +1592,31 @@ const _nameInterval = setInterval(() => {
 
 // Toggle chat panel
 document.querySelector(".chatToggleBtn").addEventListener("click", () => {
-    const panel = document.querySelector(".chatPanel");
     ug_bChatOpen = !ug_bChatOpen;
-    panel.style.display = ug_bChatOpen ? "flex" : "none";
+    ug_elChatPanel.style.display = ug_bChatOpen ? "flex" : "none";
 
     if (ug_bChatOpen) {
-        // Reset badge
         ug_nUnreadCount = 0;
-        const badge = document.querySelector(".chatBadge");
-        badge.style.display = "none";
-        // Focus input
-        document.querySelector(".chatInput").focus();
-        // Scroll to bottom
-        const msgs = document.querySelector(".chatMessages");
-        msgs.scrollTop = msgs.scrollHeight;
+        ug_elChatBadge.style.display = "none";
+        ug_elChatInput.focus();
+        ug_elChatMessages.scrollTop = ug_elChatMessages.scrollHeight;
     }
 });
 
 // Close chat
 document.querySelector(".chatCloseBtn").addEventListener("click", () => {
     ug_bChatOpen = false;
-    document.querySelector(".chatPanel").style.display = "none";
+    ug_elChatPanel.style.display = "none";
 });
 
 // Send message
 function UGi_SendChatMessage() {
-    const input = document.querySelector(".chatInput");
-    const text = input.value.trim();
+    const text = ug_elChatInput.value.trim();
     if (!text) return;
 
-    console.log("Chat: sending '" + text + "' as '" + ug_strMyName + "'");
     socket.emit("g_SendChatMessage", text);
-    input.value = "";
-    input.focus();
+    ug_elChatInput.value = "";
+    ug_elChatInput.focus();
 }
 
 document.querySelector(".chatSendBtn").addEventListener("click", UGi_SendChatMessage);
@@ -1555,8 +1636,7 @@ socket.on("g_ReceiveChatMessage", (strPlayerName, strText) => {
 });
 
 function UGi_AddChatMessage(strPlayerName, strText) {
-    const container = document.querySelector(".chatMessages");
-    if (!container) return;
+    if (!ug_elChatMessages) return;
 
     const isSelf = (strPlayerName === ug_strMyName);
 
@@ -1573,21 +1653,20 @@ function UGi_AddChatMessage(strPlayerName, strText) {
 
     msgDiv.appendChild(nameSpan);
     msgDiv.appendChild(textSpan);
-    container.appendChild(msgDiv);
+    ug_elChatMessages.appendChild(msgDiv);
 
     // Auto-scroll
-    container.scrollTop = container.scrollHeight;
+    ug_elChatMessages.scrollTop = ug_elChatMessages.scrollHeight;
 
     // Badge if chat is closed
     if (!ug_bChatOpen && !isSelf) {
         ug_nUnreadCount++;
-        const badge = document.querySelector(".chatBadge");
-        badge.textContent = ug_nUnreadCount;
-        badge.style.display = "flex";
+        ug_elChatBadge.textContent = ug_nUnreadCount;
+        ug_elChatBadge.style.display = "flex";
     }
 
-    // Limit messages in DOM (keep last 100)
-    while (container.children.length > 100) {
-        container.removeChild(container.firstChild);
+    // Limit messages in DOM (keep last 50)
+    while (ug_elChatMessages.children.length > 50) {
+        ug_elChatMessages.removeChild(ug_elChatMessages.firstChild);
     }
 }

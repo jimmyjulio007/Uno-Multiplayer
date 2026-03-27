@@ -126,3 +126,32 @@
     font-weight: 600;
     font-size: 16px;
 }
+
+@media (max-width: 700px) {
+    .allowDlg {
+        width: 85vw;
+        max-width: 320px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .allowDlg_header p {
+        font-size: 14px;
+    }
+    .allowDlg_msg {
+        font-size: 14px;
+        padding: 0.5rem 0.8rem;
+    }
+    .allowDlg_Btn {
+        padding: 8px 20px;
+    }
+    .allowDlg_Btn p {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 400px) {
+    .allowDlg {
+        width: 94vw;
+    }
+}

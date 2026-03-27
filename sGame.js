@@ -330,12 +330,15 @@ function h_PlayerWonRound (strRoomCode, mapValue, nServerIndex)
 }
 
 function PlayerEndedTurn (socket, strCurrentCard, cardMeta)
-{   
+{
     const {roomCode: strRoomCode, mapValue: mapValue, index: nServerIndex} = GetGenericValuesFromSocket (socket.id, "PlayerEndedTurn");
     if (nServerIndex == -1) { return; }
 
+    // Block eliminated players from acting
+    if (mapValue.players[nServerIndex].eliminated) { return; }
+
     //validate the cardMeta
-    if (!cardMeta.hasOwnProperty ("nCardThrown")) { Log (LogCritical, "Invalid meta data received from client"); return; }
+    if (!cardMeta || !cardMeta.hasOwnProperty ("nCardThrown")) { Log (LogCritical, "Invalid meta data received from client"); return; }
 
     //validate strCurrentCard
     const nIndex = strCurrentCard.indexOf ("-");
@@ -618,8 +621,10 @@ function LeaveRoom (socket) {
 
     if (mapPlayers.count == 0)
     {
-        //All players left.. Delete from map
+        //All players left.. Delete from map and clean up all room state
         mapRoomCodeToPlayers.delete (strRoomCode);
+        mapUnoDeclarations.delete (strRoomCode);
+        mapDrawFourInfo.delete (strRoomCode);
     }
     else
     {

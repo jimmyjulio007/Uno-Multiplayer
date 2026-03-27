@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Uno</title>
     <link rel="stylesheet" href="./Game/constants.css" />
     <link rel="stylesheet" href="./Game/game.css" />
@@ -13,6 +16,8 @@
 
     <link rel="stylesheet" href="./Game/card.css" />
 
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <link
             href="https://fonts.googleapis.com/css2?family=Merienda&family=Montserrat&display=swap"
             rel="stylesheet"
@@ -244,6 +249,20 @@
 </div>
 
 <!-- ═══ Overlays: outside .main to avoid overflow:hidden clipping ═══ -->
+
+<!-- Connection Status Indicator -->
+<div class="connectionStatus" id="connectionStatus" title="Connecte">
+    <span class="connectionDot"></span>
+    <span class="connectionText">Connecte</span>
+</div>
+
+<!-- Reconnecting Overlay -->
+<div class="reconnectOverlay" id="reconnectOverlay" style="display:none;">
+    <div class="reconnectBox">
+        <div class="reconnectSpinner"></div>
+        <p>Reconnexion en cours...</p>
+    </div>
+</div>
 
 <!-- Leave Room Button -->
 <div class="leaveRoomBtn" title="Quitter la room">&#10005;</div>
