@@ -2,7 +2,7 @@
 const mapCache = new Map(); //maps unique ids to player props
 
 const nIdLength = 8;
-const nCacheTimeout = 20;   //in seconds
+const nCacheTimeout = 60;   //in seconds — enough time for 8 players on slow connections
 
 module.exports.SetPlayerCache = function (strRoomCode, strPlayerName, bIsHost) {
 

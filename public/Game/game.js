@@ -1,4 +1,4 @@
-const ug_nGenericTimeout = 3500;    //ms
+const ug_nGenericTimeout = 15000;    //ms — enough for 8 players connecting simultaneously
 //Timeout booleans
 let ug_bInitJoinRoom = false;
 let ug_bInitJoinRoomAlreadyFailed = false;
@@ -167,6 +167,7 @@ let ug_bIsYourTurn = false;
 let ug_bCanDrawCard = false;
 let ug_bCanThrowAnyCard = false;
 let ug_bCanThrowSameNumber = false;
+let ug_bForcedDrawPending = false;  // True after clicking deck on a forced draw — turn must auto-end
 
 let ug_strPlayerHasWon = "";
 let ug_strCacheId = "";
@@ -378,6 +379,7 @@ function UGi_ResetForNewRound() {
     ug_bCanThrowAnyCard = false;
     ug_bCanThrowSameNumber = false;
     ug_bUnoDeclared = false;
+    ug_bForcedDrawPending = false;
     ug_currCardMeta.nCardThrown = 0;
     ug_currCardMeta.nForceDraw = 0;
     ug_currCardMeta.nForceDrawValue = 0;
@@ -507,10 +509,11 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
         // Show UNO button early if you have 2 cards (you need to press before playing)
         UGi_CheckShowUnoButton();
 
-        // If forced to draw (+2/+4/+6/+10 stack), can ONLY stack or draw — no normal cards
+        // Forced draw (+2/+4 stack) — both modes allow stacking with >= value
         if (metaData && metaData.nForceDraw > 0) {
-            ug_bCanThrowAnyCard = true;  // true so UGi_ThrowCardIsValid checks stacking
-            ug_bCanThrowSameNumber = false; // cannot play same-number cards
+            // Player can stack a draw card with value >= current, or click deck to draw all
+            ug_bCanThrowAnyCard = true;
+            ug_bCanThrowSameNumber = false;
         } else {
             ug_bCanThrowAnyCard = true;
             ug_bCanThrowSameNumber = true;
@@ -548,6 +551,16 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
 socket.on ("g_UpdateSelfCardsCount", (data) => {
     UC_SetPlayerDetails (uc_playerSelf, data, nRoundsToWin);
 
+    // After a forced draw (penalty from +2/+4 stack), the turn MUST end immediately.
+    // The player drew cards as penalty — they cannot play from those drawn cards.
+    if (ug_bForcedDrawPending)
+    {
+        ug_bForcedDrawPending = false;
+        ug_currCardMeta.nCardThrown = 0;
+        UGi_EndTurn ();
+        return;
+    }
+
     //If player has a valid card then show the end turn button
     let bHasValid = false;
     const nTotalLength = data.cards.length
@@ -563,7 +576,7 @@ socket.on ("g_UpdateSelfCardsCount", (data) => {
     // console.log (nStartIndex);
     for (; nStartIndex < nTotalLength; nStartIndex++)
     {
-        const strCard = data.cards[nStartIndex]; 
+        const strCard = data.cards[nStartIndex];
         let cardObj = UC_ParseCard (strCard);
         if (!cardObj) { continue; }
 
@@ -576,7 +589,7 @@ socket.on ("g_UpdateSelfCardsCount", (data) => {
     // console.log ("IsValid: " + bHasValid);
     if (bHasValid)
     {
-        ug_bIsYourTurn = true;   //This should already be true and should continue being true so no need to set it 
+        ug_bIsYourTurn = true;   //This should already be true and should continue being true so no need to set it
         ug_bCanDrawCard = false;
         ug_bCanThrowAnyCard = true;
         ug_bCanThrowSameNumber = true;
@@ -724,8 +737,9 @@ document.querySelector (".deckCard").addEventListener ("click", () => {
 
     if (ug_currCardMeta.nForceDraw != 0)
     {
-        // Forced draw (stack penalty) — draw all at once
+        // Forced draw (stack penalty) — draw all at once, turn auto-ends after
         if (ug_currCardMeta.nForceDrawValue == 0) { ug_currCardMeta.nForceDrawValue = 1; }
+        ug_bForcedDrawPending = true;
         UGi_DrawCard (ug_currCardMeta.nForceDrawValue);
     }
     else
@@ -743,11 +757,17 @@ socket.on("g_DrawOneCardResult", (bPlayable) => {
     if (bPlayable) {
         // Drawn card is playable — player can play it or end turn
         ug_bCanThrowAnyCard = true;
-        ug_bCanThrowSameNumber = true;
+        ug_bCanThrowSameNumber = false; // After drawing, can only play matching cards (not same-number shortcut)
         UG_ShowEndTurnButton(true);
     } else {
-        // Not playable — allow drawing another card
-        ug_bCanDrawCard = true;
+        if (ug_bNoMercy) {
+            // No Mercy: keep drawing until you find a playable card
+            ug_bCanDrawCard = true;
+        } else {
+            // CLASSIC: drawn card not playable → turn ends immediately (PDF rule)
+            ug_currCardMeta.nCardThrown = 0;
+            UGi_EndTurn();
+        }
     }
 });
 
@@ -1037,6 +1057,7 @@ function UG_CardOnClick(eCard) {
             }
         }
 
+        // Both modes: check if player can throw another card of the same type
         let bHasValidNumber = false;
         const cards = UGi_GetSelfCardsFromHtml();
         for (let i = 0; i < cards.length && !bHasValidNumber; i++)
@@ -1084,6 +1105,19 @@ function UGi_GetSelfCardsFromHtml () {
     return cardsArray;
 }
 
+// Classic: check if player has any card of a given color in hand
+function UGi_PlayerHasColor (strColor)
+{
+    if (!strColor || strColor === "black") return false;
+    const cardCtnDiv = uc_playerSelf.querySelectorAll(".cardCtnHor img");
+    for (let i = 0; i < cardCtnDiv.length; i++)
+    {
+        const col = cardCtnDiv[i].getAttribute("cardColor");
+        if (col === strColor) return true;
+    }
+    return false;
+}
+
 // No Mercy: get the penalty value of a draw card type
 function UGi_GetDrawValue (strCardType)
 {
@@ -1103,17 +1137,12 @@ function UGi_ThrowCardIsValid (strCardCol, strCardType, strCurrentCol, strCurren
 {
     if (ug_bCanThrowAnyCard)
     {
-        // Stacking rule
+        // Stacking rule: can play a draw card with value >= the current stack
+        // Ex: +4 on +2 ✓, +2 on +2 ✓, +2 on +4 ✗
         if (ug_currCardMeta.nForceDraw !== 0)
         {
-            if (ug_bNoMercy) {
-                // No Mercy: must play +X with value >= last played +X
-                const cardDraw = UGi_GetDrawValue(strCardType);
-                return cardDraw >= ug_currCardMeta.nForceDraw;
-            } else {
-                // Classic: same type only (+2 on +2, wild4 on wild4)
-                return strCardType === strCurrentType;
-            }
+            const cardDraw = UGi_GetDrawValue(strCardType);
+            return cardDraw >= ug_currCardMeta.nForceDraw;
         }
 
         let bCanThrowCard = false;
@@ -1124,6 +1153,17 @@ function UGi_ThrowCardIsValid (strCardCol, strCardType, strCurrentCol, strCurren
             (ug_currCardMeta.strAdditionalCol !== "" && ug_currCardMeta.strAdditionalCol === strCardCol))
         {
             bCanThrowCard = true;
+        }
+
+        // Classic mode: Wild Draw 4 can only be played if player has NO card
+        // matching the current color (PDF 42003 rule). In No Mercy, bluffing is
+        // allowed and handled by the challenge system instead.
+        if (bCanThrowCard && !ug_bNoMercy && strCardType === "draw4" && strCardCol === "black")
+        {
+            const activeCol = ug_currCardMeta.strAdditionalCol || strCurrentCol;
+            if (UGi_PlayerHasColor(activeCol)) {
+                bCanThrowCard = false;
+            }
         }
 
         return bCanThrowCard;
@@ -1231,13 +1271,8 @@ socket.on("g_SwapAllHandsNotify", () => {
 
 socket.on("g_UpdateSelfCardsCount_NoAutoEnd", (data) => {
     UC_SetPlayerDetails(uc_playerSelf, data, nRoundsToWin);
-
-    // If it's still our turn, re-enable play flags so we can play drawn cards
-    if (ug_bIsYourTurn) {
-        ug_bCanThrowAnyCard = true;
-        ug_bCanThrowSameNumber = true;
-        UG_ShowEndTurnButton(true);
-    }
+    // Only update card display — do NOT show End Turn button here.
+    // The g_DrawOneCardResult handler controls what the player can do after drawing.
 });
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1395,19 +1430,23 @@ function UGi_StartTurnTimer() {
             // Auto-draw if it's your turn and timer ran out
             if (ug_bIsYourTurn) {
                 if (ug_currCardMeta.nForceDraw !== 0) {
-                    // Must resolve stack
+                    // Must resolve stack — auto-end after draw
+                    ug_bForcedDrawPending = true;
                     UGi_DrawCard(ug_currCardMeta.nForceDrawValue);
                     ug_currCardMeta.nCardThrown = 0;
                     ug_bCanDrawCard = false;
                     // End turn after forced draw
                 } else {
-                    socket.emit("g_DrawUntilPlayable");
+                    // No forced draw — just end turn (player didn't play in time)
                     ug_bCanDrawCard = false;
+                    ug_bCanThrowAnyCard = false;
+                    ug_bCanThrowSameNumber = false;
                 }
                 ug_currCardMeta.nCardThrown = 0;
+                // Small delay for animations, then end turn
                 setTimeout(() => {
                     if (ug_bIsYourTurn) UGi_EndTurn();
-                }, 1500);
+                }, 500);
             }
         }
     }, 1000);

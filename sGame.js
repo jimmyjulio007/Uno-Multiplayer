@@ -426,16 +426,16 @@ function PlayerEndedTurn (socket, strCurrentCard, cardMeta)
     // Clean UNO declarations after checking
     h_CleanUnoDeclarations(strRoomCode, playerData.name);
 
-    // No Mercy: If a draw4/reversedraw4 was played, store info for challenge
     const bIsDrawFour = (strCardType === "draw4" || strCardType === "reversedraw4");
-    if (cardMeta.nCardThrown !== 0 && bIsDrawFour)
+    // No Mercy only: store draw4 info for challenge system
+    if (cardMeta.nCardThrown !== 0 && bIsDrawFour && h_GetMode(strRoomCode) === "nomercy")
     {
         h_StoreDrawFourInfo(strRoomCode, nServerIndex, cardMeta._prevCardColor || "", cardMeta.strAdditionalCol || "");
     }
 
-    // No Mercy: 2-player Reverse+4 special — YOU (the player) draw 4, not opponent!
+    // No Mercy only: 2-player Reverse+4 special — YOU (the player) draw 4, not opponent!
     // PDF: "l'adversaire passe son tour et le joueur AYANT POSE la carte pige 4 cartes"
-    if (strCardType === "reversedraw4" && mapValue.count === 2 && cardMeta.nCardThrown !== 0)
+    if (strCardType === "reversedraw4" && mapValue.count === 2 && cardMeta.nCardThrown !== 0 && h_GetMode(strRoomCode) === "nomercy")
     {
         // The player who played it draws 4
         let selfCards = cardGenerator.GetCardsDeck(4, strRoomCode, h_GetMode(strRoomCode));
@@ -481,8 +481,8 @@ function PlayerEndedTurn (socket, strCurrentCard, cardMeta)
     //Reset bSkipAll after calculating next turn
     cardMeta.bSkipAll = false;
 
-    // No Mercy: draw4/reversedraw4 → allow challenge
-    if (cardMeta.nCardThrown !== 0 && bIsDrawFour)
+    // No Mercy only: draw4/reversedraw4 → allow challenge
+    if (cardMeta.nCardThrown !== 0 && bIsDrawFour && h_GetMode(strRoomCode) === "nomercy")
     {
         cardMeta.bCanChallenge = true;
     }
@@ -696,12 +696,16 @@ function InitJoinRoom (socket, strCode, strMode) {
         }
     }
 
+    let nPlayerIndex = mapValue.count;
+    if (nPlayerIndex >= nMaxPlayersInRoom) {
+        Log (LogWarn, "InitJoinRoom: Room is full (" + nPlayerIndex + "/" + nMaxPlayersInRoom + ")");
+        socket.emit ("g_InitJoinRoomFailure", "La room est pleine");
+        return;
+    }
+
      //Success
      socket.join (strRoomCode);
      socket.emit ("g_InitJoinRoomSuccess");
-
-    let nPlayerIndex = mapValue.count;
-    if (nPlayerIndex >= nMaxPlayersInRoom) return;
 
     mapValue.players[nPlayerIndex] = { name: strPlayerName, socketId: socket.id, winCount: nPlayerWins, eliminated: false };
     mapValue.players[nPlayerIndex].cards = [];
@@ -713,8 +717,6 @@ function InitJoinRoom (socket, strCode, strMode) {
     }
 
     mapSocketIdToRoomCode.set (socket.id, strRoomCode);
-    
-    socket.join (strRoomCode);
 
     //Player can join only when the scoreboard is shown, so it isnt necessary to update the players (only the scoreboard)
     // UpdatePlayerNum (strRoomCode, -1, true);

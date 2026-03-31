@@ -6,7 +6,7 @@ const server = app.listen(nPortNumber, () => console.log(`Listening at port: ${n
 const socketio = require('socket.io');
 const io = socketio(server, {
     pingInterval: 25000,
-    pingTimeout: 5000
+    pingTimeout: 20000
 });
 
 app.use ('/', express.static('public'))
