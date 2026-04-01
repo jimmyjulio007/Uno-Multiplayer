@@ -452,6 +452,10 @@ socket.on ("g_StartTurn", (strPlayerTurn, metaData) => {
     UC_HighlightPlayerCtn (ePlayerTurn, true);
     ug_prevTurnPlayer = ePlayerTurn;
 
+    // Reset card-thrown count at the start of every turn so we can distinguish
+    // "I played a +2" (attacker, nCardThrown>0) from "I received a +2" (victim, nCardThrown==0)
+    ug_currCardMeta.nCardThrown = 0;
+
     if (metaData)
     {
         ug_currCardMeta.nForceDraw = metaData.nForceDraw;
@@ -998,6 +1002,7 @@ function UG_CardOnClick(eCard) {
     {
         UG_ShowEndTurnButton (false);
         UGi_WildShowColorPicker (true);
+        UGi_StopTurnTimer(); // Pause timer while choosing color
         ug_bCanThrowSameNumber = false;
     }
     // Colored skipeveryone → you play again (no color picker needed)
@@ -1070,6 +1075,13 @@ function UG_CardOnClick(eCard) {
             UG_ShowEndTurnButton (true);
         else
             UGi_EndTurn ();
+    }
+    else if (ug_currCardMeta.nForceDraw > 0 && strColor !== "black")
+    {
+        // Played a COLORED draw card to stack (+2 on +2, etc.) — end turn immediately
+        // Wild/black draw cards are excluded: they need the color picker first,
+        // and UGi_EndTurn() is called after the player picks a color.
+        UGi_EndTurn ();
     }
 }
 
@@ -1170,7 +1182,7 @@ function UGi_ThrowCardIsValid (strCardCol, strCardType, strCurrentCol, strCurren
     }
     else if (ug_bCanThrowSameNumber)
     {
-        return strCardType === strCurrentType;
+        return strCardType === strCurrentType || strCardCol === strCurrentCol;
     }
     else
     {
@@ -1429,20 +1441,18 @@ function UGi_StartTurnTimer() {
             UGi_StopTurnTimer();
             // Auto-draw if it's your turn and timer ran out
             if (ug_bIsYourTurn) {
-                if (ug_currCardMeta.nForceDraw !== 0) {
-                    // Must resolve stack — auto-end after draw
+                if (ug_currCardMeta.nForceDraw !== 0 && ug_currCardMeta.nCardThrown === 0) {
+                    // VICTIM: received a +2/+4 and didn't stack → must draw penalty
                     ug_bForcedDrawPending = true;
                     UGi_DrawCard(ug_currCardMeta.nForceDrawValue);
-                    ug_currCardMeta.nCardThrown = 0;
                     ug_bCanDrawCard = false;
-                    // End turn after forced draw
                 } else {
-                    // No forced draw — just end turn (player didn't play in time)
+                    // ATTACKER (played a draw card, nCardThrown>0) or normal timeout
+                    // Don't draw — just end turn. Penalty passes to next player.
                     ug_bCanDrawCard = false;
                     ug_bCanThrowAnyCard = false;
                     ug_bCanThrowSameNumber = false;
                 }
-                ug_currCardMeta.nCardThrown = 0;
                 // Small delay for animations, then end turn
                 setTimeout(() => {
                     if (ug_bIsYourTurn) UGi_EndTurn();
@@ -1491,7 +1501,8 @@ const ug_emojiMap = {
     "rage": "\u{1F621}",
     "skull": "\u{1F480}",
     "fire": "\u{1F525}",
-    "clown": "\u{1F921}"
+    "clown": "\u{1F921}",
+    "sad": "\u{1F62D}"
 };
 
 let ug_bEmojiCooldown = false;

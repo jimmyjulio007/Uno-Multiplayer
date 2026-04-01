@@ -1227,7 +1227,7 @@ function h_CleanUnoDeclarations (strRoomCode, strPlayerName)
 }
 
 // Emoji reaction - broadcast to all players in room
-const validEmojis = new Set(["laugh", "rage", "skull", "fire", "clown"]);
+const validEmojis = new Set(["laugh", "rage", "skull", "fire", "clown", "sad"]);
 
 function SendEmoji (socket, strEmojiKey)
 {
