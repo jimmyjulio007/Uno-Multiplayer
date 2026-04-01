@@ -1,7 +1,8 @@
-node_modules/
-.DS_Store
-.ionide/
-Log/
-Utils/
-*.log
+node_modules/
+.DS_Store
+.ionide/
+Log/
+Utils/
+*.log
+config.bat
 .env
